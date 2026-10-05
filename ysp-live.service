@@ -1,0 +1,15 @@
+[Unit]
+Description=ysp-live v6.0 CCTV live proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/ysp-live/ysp-live.py {{PORT}}
+Restart=always
+RestartSec=5
+# 设备注册信息保存在工作目录，请勿删除 device-state-rs.json
+WorkingDirectory=/opt/ysp-live
+
+[Install]
+WantedBy=multi-user.target
