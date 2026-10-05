@@ -7,7 +7,7 @@
 
 央视频全频道直播（64 路，含 26 路真 4K / 高码率），纯 Python 单文件，单端口，一条命令在 VPS 上跑起来。
 
-**中文文档**: [README-CN.md](README-CN.md)
+**English README**: [README.md](README.md)
 
 ## 这是什么
 
