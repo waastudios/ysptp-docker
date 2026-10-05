@@ -1,5 +1,10 @@
 # ysp-live v6.0 · Docker 部署版
 
+> **致谢**
+> 1. 感谢 IPTV 总部分享的算法源码
+> 2. 感谢 Gary's Club 群里小伙伴 ll 提供大量频道的 live_id
+> 3. 感谢 APTV 群主提供的技术帮助
+
 央视频全频道直播（64 路，含 26 路真 4K / 高码率），纯 Python 单文件，单端口，一条命令在 VPS 上跑起来。
 
 **中文文档**: [README-CN.md](README-CN.md)

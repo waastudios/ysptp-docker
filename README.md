@@ -1,5 +1,10 @@
 # ysp-live v6.0
 
+> **Acknowledgments**
+> 1. Thanks to IPTV总部 for sharing the algorithm source code
+> 2. Thanks to ll from the Gary's Club group for providing live_ids for many channels
+> 3. Thanks to the APTV group owner for technical help
+
 64 live CCTV channels, pure Python single file, single port. One command to run on a VPS.
 
 **中文文档**: [README-CN.md](README-CN.md)
