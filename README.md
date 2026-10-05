@@ -1,7 +1,7 @@
 # ysp-live v6.0
 
 > **Acknowledgments**
-> 1. Thanks to IPTV总部 for sharing the algorithm source code
+> 1. Thanks to IPTV Official Group for sharing the algorithm source code
 > 2. Thanks to ll from the Gary's Club group for providing live_ids for many channels
 > 3. Thanks to the APTV group owner for technical help
 
