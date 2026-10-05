@@ -1,0 +1,8 @@
+services:
+  ysp-live:
+    build: .
+    image: ysp-live:v6.2
+    container_name: ysp-live
+    ports:
+      - "8767:8767"
+    restart: unless-stopped
