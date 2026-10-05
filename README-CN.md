@@ -1,4 +1,4 @@
-# ysp-live v6.0 · Docker 部署版
+# ysp-live v6.0
 
 > **致谢**
 > 1. 感谢 IPTV 总部分享的算法源码
