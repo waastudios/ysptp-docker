@@ -1,4 +1,4 @@
-# ysp-live v7.4
+# ysp-live v8.1
 
 > **致谢**
 > 1. 感谢 [IPTV 总部](http://t.me/iptvorganization)分享的算法源码
@@ -12,9 +12,9 @@
 ## 包含内容
 
 - **30 路央视频道**，带分组（`group-title`）：央视FHD / 央视UHD / CGTN
-- **真 4K 频道**：CCTV-4K、CCTV-8K、CCTV-16 4K（设备协议）
+- **双引擎四层兜底**：设备投屏真 4K/8K → 1080p JCE → bkliveinfo → Node.js WASM 兜底
 - **7 天回看与时移**：19 路频道支持 7 天节目回看（`catchup="append"`）
-- 纯 Python，零依赖，单端口（8767）
+- 纯 Python + Node.js，单端口（8767）
 - 后台自动保活：每 30 秒心跳、静默续期 Session、24/7 保活
 - 设备身份持久化：`./data` 数据卷，容器重建不丢注册
 - APTV 播放器优化：关闭预览/测速，避免触发风控限流
@@ -98,7 +98,7 @@ docker compose down            # 停止
 
 ```bash
 cd /opt/ysp-live-docker && docker compose down -v
-docker rmi ysp-live:v7.4
-cd /opt && rm -rf /opt/ysp-live-docker /opt/v7.4.zip
+docker rmi ysp-live:v8.1
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v8.1.zip
 ```
 `docker compose down -v` 会连设备注册数据一起删除。
