@@ -56,6 +56,19 @@ curl -s ifconfig.me
 ufw allow 8767/tcp
 ```
 
+## EPG Guide Subscription
+
+This project ships a built-in aggregated EPG endpoint — no need to configure third-party EPG sources manually:
+
+- URL: `http://<VPS_PUBLIC_IP>:8767/epg.xml`
+- Content: programme guide for only the 30 channels in this project (CCTV FHD / CCTV UHD / CGTN); irrelevant channels are filtered out
+- Upstream sources (merged automatically; the two complement each other, one going down won't break the other):
+  - `https://live.fanmingming.com/e.xml`
+  - `https://epg.112114.xyz/pp.xml.gz`
+- Refresh: auto-updates every 6 hours; fetched in the background on first access, just retry after a moment
+
+The `/cctv.m3u` playlist already points to this address, so players load the guide automatically.
+
 ## Notes
 
 - **Bandwidth**: 4K channels relay video through the VPS (~15GB/hour at 35Mbps). A VPS far from CCTV's CDN (e.g. US) may stutter on 4K; an Asia VPS is recommended for smooth 4K.
