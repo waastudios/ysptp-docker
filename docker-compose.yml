@@ -1,7 +1,7 @@
 services:
   ysp-live:
     build: .
-    image: ysp-live:v7.4
+    image: ysp-live:v8.1
     container_name: ysp-live
     restart: unless-stopped
     ports:
@@ -11,5 +11,4 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - PYTHONUNBUFFERED=1
-    # Linux / 群晖 / 软路由 NAS 推荐启用 host 模式（取消下一行注释并注释掉上方 ports）以获得极致 4K 吞吐：
-    # network_mode: host
+      - YSP_DATA_DIR=/app/data
