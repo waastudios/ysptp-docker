@@ -1,7 +1,7 @@
 # ysp-live v7.4
 
 > **致谢**
-> 1. 感谢 IPTV 总部分享的算法源码
+> 1. 感谢 [IPTV 总部](http://t.me/iptvorganization)分享的算法源码
 > 2. 感谢 Gary's Club 群里小伙伴 ll 提供大量频道的 live_id
 > 3. 感谢 APTV 群主提供的技术帮助
 
