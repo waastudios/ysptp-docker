@@ -50,7 +50,12 @@ curl -s ifconfig.me
 - Homepage: `http://<VPS_PUBLIC_IP>:8767/`
 - Diagnostics: `http://<VPS_PUBLIC_IP>:8767/diag`
 
-> Note: `localhost` only works on the machine itself. On a VPS, always replace it with the public IP.
+> Note: `localhost` only works on the machine itself. On a VPS, always replace it with the public IP; on a LAN use the private IP (e.g. `http://192.168.1.10:8767/cctv.m3u`).
+
+Channel groups:
+- 央视FHD: CCTV-1~17, 5+, 6, 3 theater channels, etc.
+- 央视UHD: CCTV-4K, 8K, 16-4K
+- CGTN: CGTN main + French / Russian / Arabic / Spanish / Documentary
 
 ## Ports & firewall
 
