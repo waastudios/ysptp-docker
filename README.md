@@ -40,6 +40,7 @@ curl -s ifconfig.me
 ```
 
 - CCTV subscription (30 channels, with groups): `http://<VPS_PUBLIC_IP>:8767/cctv.m3u`
+- Aggregated EPG (30 channels, refreshes every 6h): `http://<VPS_PUBLIC_IP>:8767/epg.xml`
 - Homepage: `http://<VPS_PUBLIC_IP>:8767/`
 - Diagnostics: `http://<VPS_PUBLIC_IP>:8767/diag`
 
@@ -49,7 +50,7 @@ curl -s ifconfig.me
 
 | Port | Purpose |
 | --- | --- |
-| 8767 | Single port: homepage, subscriptions, 30 channels, TS relay |
+| 8767 | Single port: homepage, subscriptions, 30 channels, TS relay, aggregated EPG |
 
 ```bash
 ufw allow 8767/tcp
@@ -59,7 +60,7 @@ ufw allow 8767/tcp
 
 - **Bandwidth**: 4K channels relay video through the VPS (~15GB/hour at 35Mbps). A VPS far from CCTV's CDN (e.g. US) may stutter on 4K; an Asia VPS is recommended for smooth 4K.
 - **Device registration**: first boot takes ~5-10s for device registration; rebuilding the container requires re-registration (normal).
-- Subscriptions include logos, `tvg-id`, `group-title`, and EPG — no manual EPG setup needed.
+- Subscriptions include logos, `tvg-id`, `group-title`, and aggregated EPG (`/epg.xml`, merged from two upstream sources, only the 30 channels in this project) — no manual EPG setup needed.
 
 ## Common commands
 
