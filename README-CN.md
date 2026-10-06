@@ -22,7 +22,7 @@
 ## VPS 一键部署
 
 ```bash
-cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v7.4.zip "https://github.com/waastudios/ysptp-rs/releases/download/v7.4/ysp-live-docker-v7.4.zip" && python3 -c "import zipfile; zipfile.ZipFile('v7.4.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build
+cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v7.4.zip "https://github.com/waastudios/ysptp-docker/releases/download/v7.4/ysp-live-docker-v7.4.zip" && python3 -c "import zipfile; zipfile.ZipFile('v7.4.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build
 ```
 
 等约 30 秒，看日志出现 `设备协议就绪`：
