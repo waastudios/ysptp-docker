@@ -1,4 +1,4 @@
-# ysp-live v7.4
+# ysp-live v8.1
 
 > **Acknowledgments**
 > 1. Thanks to [IPTV Official Group](http://t.me/iptvorganization) for sharing the algorithm source code
@@ -12,9 +12,9 @@ CCTV live streaming via Docker — **CCTV channels only** (30 channels): CCTV-1~
 ## What's inside
 
 - **30 CCTV channels** with groups (`group-title`): 央视FHD / 央视UHD / CGTN
-- **True 4K channels**: CCTV-4K, CCTV-8K, CCTV-16 4K via device protocol
+- **Dual-engine 4-layer fallback**: device 4K/8K → 1080p JCE → bkliveinfo → Node.js WASM fallback
 - **7-day catchup & timeshift**: 19 channels support 7-day program replay (`catchup="append"`)
-- Pure Python, zero dependencies, single port (8767)
+- Python + Node.js, single port (8767)
 - Auto keep-alive: heartbeat every 30s, silent session renewal, 24/7 background worker
 - Persistent device identity: `./data` volume survives container rebuilds
 - APTV player optimized: no preview/latency probing to avoid triggering rate limits
@@ -98,7 +98,7 @@ docker compose down            # stop
 
 ```bash
 cd /opt/ysp-live-docker && docker compose down -v
-docker rmi ysp-live:v7.4
-cd /opt && rm -rf /opt/ysp-live-docker /opt/v7.4.zip
+docker rmi ysp-live:v8.1
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v8.1.zip
 ```
 `docker compose down -v` also removes the device registration data.
