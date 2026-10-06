@@ -22,7 +22,7 @@
 ## VPS 一键部署
 
 ```bash
-curl -sSL https://cdn.jsdelivr.net/gh/waastudios/ysptp-docker@main/install.sh|bash
+curl -sSL https://raw.githubusercontent.com/waastudios/ysptp-docker/main/install.sh|bash
 ```
 
 等约 30 秒，看日志出现 `设备协议就绪`：
