@@ -93,3 +93,12 @@ docker logs -f ysp-live        # 看日志
 docker compose restart         # 重启
 docker compose down            # 停止
 ```
+
+## 卸载
+
+```bash
+cd /opt/ysp-live-docker && docker compose down -v
+docker rmi ysp-live:v7.4
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v7.4.zip
+```
+`docker compose down -v` 会连设备注册数据一起删除。
