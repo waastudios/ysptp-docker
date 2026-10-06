@@ -22,7 +22,7 @@ CCTV live streaming via Docker — **CCTV channels only** (30 channels): CCTV-1~
 ## One-command VPS deploy
 
 ```bash
-cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v7.4.zip "https://github.com/waastudios/ysptp-docker/releases/download/v7.4/ysp-live-docker-v7.4.zip" && python3 -c "import zipfile; zipfile.ZipFile('v7.4.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build
+cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v7.4.zip "https://github.com/waastudios/ysptp-docker/releases/download/v7.4/ysp-live-docker-v7.4.zip" && python3 -c "import zipfile; zipfile.ZipFile('v7.4.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build && IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}') && echo "" && echo "ysp-live deployed successfully" && echo "Subscription: http://$IP:8767/cctv.m3u" && echo "EPG subscription: http://$IP:8767/epg.xml" && echo "View logs: docker logs -f ysp-live"
 ```
 
 Wait ~30s, then check logs for `设备协议就绪` (device protocol ready):
