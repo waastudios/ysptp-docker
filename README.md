@@ -22,7 +22,7 @@ CCTV live streaming via Docker — **CCTV channels only** (30 channels): CCTV-1~
 ## One-command VPS deploy
 
 ```bash
-curl -sSL https://cdn.jsdelivr.net/gh/waastudios/ysptp-docker@main/install.sh|bash
+curl -sSL https://raw.githubusercontent.com/waastudios/ysptp-docker/main/install.sh|bash
 ```
 
 Wait ~30s, then check logs for `设备协议就绪` (device protocol ready):
