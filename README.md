@@ -69,12 +69,8 @@ ufw allow 8767/tcp
 
 ## EPG Guide Subscription
 
-This project ships a built-in aggregated EPG endpoint — no need to configure third-party EPG sources manually:
+This project ships a built-in aggregated EPG endpoint (see Usage above for the URL) — no need to configure third-party EPG sources manually:
 
-- URL (copy-paste ready; replace `<VPS_PUBLIC_IP>` with your VPS public IP or LAN IP):
-  ```
-  http://<VPS_PUBLIC_IP>:8767/epg.xml
-  ```
 - Content: programme guide for only the 30 channels in this project (CCTV FHD / CCTV UHD / CGTN); irrelevant channels are filtered out
 - Upstream sources (merged automatically; the two complement each other, one going down won't break the other):
   - `https://live.fanmingming.com/e.xml`
@@ -87,7 +83,7 @@ The `/cctv.m3u` playlist already points to this address, so players load the gui
 
 - **Bandwidth**: 4K channels relay video through the VPS (~15GB/hour at 35Mbps). A VPS far from CCTV's CDN (e.g. US) may stutter on 4K; an Asia VPS is recommended for smooth 4K.
 - **Device registration**: first boot takes ~5-10s for device registration; rebuilding the container requires re-registration (normal).
-- Subscriptions include logos, `tvg-id`, `group-title`, and aggregated EPG (`/epg.xml`, merged from two upstream sources, only the 30 channels in this project) — no manual EPG setup needed.
+- Subscriptions include logos, `tvg-id`, `group-title`, and aggregated EPG — no manual EPG setup needed.
 
 ## Common commands
 
