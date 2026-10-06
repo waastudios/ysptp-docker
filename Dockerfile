@@ -9,6 +9,7 @@ ENV TZ=Asia/Shanghai \
 WORKDIR /app
 
 COPY ysp-live.py ./
+COPY epg_agg.py ./
 
 RUN mkdir -p /app/data
 
