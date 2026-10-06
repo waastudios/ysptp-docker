@@ -39,10 +39,13 @@ docker logs -f ysp-live
 curl -s ifconfig.me
 ```
 
-- 央视订阅（30 路，带分组）：`http://<VPS公网IP>:8767/cctv.m3u`
+- 央视订阅（30 路，带分组）：
+  ```
+  http://<VPS公网IP>:8767/cctv.m3u
+  ```
 - 聚合 EPG（30 路，6 小时刷新）：
   ```
-  http://localhost:8767/epg.xml
+  http://<VPS公网IP>:8767/epg.xml
   ```
 - 首页：`http://<VPS公网IP>:8767/`
 - 诊断：`http://<VPS公网IP>:8767/diag`
@@ -68,9 +71,9 @@ ufw allow 8767/tcp
 
 本项目自带聚合 EPG 接口，开箱即用，不用再手动填第三方 EPG 源：
 
-- 地址（复制即用，`localhost` 换成你的 VPS 公网 IP 或内网 IP）：
+- 地址（复制即用，把 `<VPS公网IP>` 换成你的 VPS 公网 IP 或内网 IP）：
   ```
-  http://localhost:8767/epg.xml
+  http://<VPS公网IP>:8767/epg.xml
   ```
 - 内容：只包含本项目 30 路频道的节目单（央视FHD/央视UHD/CGTN），无用频道已过滤
 - 数据源：自动合并以下两个上游 EPG（两源互补，单个源挂了不影响）：
