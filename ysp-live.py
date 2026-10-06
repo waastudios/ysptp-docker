@@ -5,6 +5,7 @@ import binascii
 import collections
 import contextlib
 import dataclasses
+import datetime
 import gzip
 import hashlib
 import hmac as _hmac
@@ -28,7 +29,7 @@ import urllib.parse
 import urllib.request
 import uuid
 from collections import deque
-__version__ = '6.2.0'
+__version__ = '7.4.0'
 AK = '9f5c54c4ed0e50109b800f7e28fec205'
 RSA_PUBLIC_KEY_B64 = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkKeLy4ywWLSnBkwRyqYgF3HMIj05V5uuh5HjyEsZOWnu1NHu3jPQv3sr32wwQNYv5qapsNXmNgLUDHtgHZxqPQAYXltjSRc0qhcD286t62wOIHId8zXS3s1Jy4rgU4qjQWzI9rp/1sE0pMsmwTaJa4zuJ5iz8VwF8Av5oJ1k+HxY+/HLnjNlW1hmWLpuDYmkZYuAoTHa1VGeHQh9FEKI8ZcL3GTQphShUoC+Kg3P1hGUVTtCYapmzPS5lkAdwebuzwvTCfGiTErYZCnPBUSeV7BVlgjtLYIi29KvF0a8FHsJMfe/UdHcyW/RihsIYOtDQcRRpFGXyPXbVrzFJse24QIDAQAB'
 CLOUD_GET_URL = 'https://ytpcloudws.cctv.cn/cloudps/wssapi/device/v2/get'
@@ -533,7 +534,8 @@ def inspect_playlist_cache(cached, entry: ChannelEntry, proxy_origin: str, proxy
 DEVICE_PROFILE_POOL = [{'source': 'sony_8k_pool.XR-85Z9K', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-85Z9K', 'report_model': 'XR85Z9K', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2022.XR_85Z9K', 'screen_param': '7680-4320-280', 'cast_model': 'XR-85Z9K'}, {'source': 'sony_8k_pool.XR-75Z9K', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-75Z9K', 'report_model': 'XR75Z9K', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2022.XR_75Z9K', 'screen_param': '7680-4320-260', 'cast_model': 'XR-75Z9K'}, {'source': 'sony_8k_pool.XR-85Z9J', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-85Z9J', 'report_model': 'XR85Z9J', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2021.XR_85Z9J', 'screen_param': '7680-4320-280', 'cast_model': 'XR-85Z9J'}, {'source': 'sony_8k_pool.XR-75Z9J', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-75Z9J', 'report_model': 'XR75Z9J', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2021.XR_75Z9J', 'screen_param': '7680-4320-260', 'cast_model': 'XR-75Z9J'}, {'source': 'sony_8k_pool.KD-98ZG9', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'KD-98ZG9', 'report_model': 'KD98ZG9', 'hardware': 'mt5893', 'board': 'mt5893', 'version_id': 'SONYTV.2019.KD_98ZG9', 'screen_param': '7680-4320-320', 'cast_model': 'KD-98ZG9'}, {'source': 'sony_8k_pool.KD-85ZG9', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'KD-85ZG9', 'report_model': 'KD85ZG9', 'hardware': 'mt5893', 'board': 'mt5893', 'version_id': 'SONYTV.2019.KD_85ZG9', 'screen_param': '7680-4320-280', 'cast_model': 'KD-85ZG9'}, {'source': 'sony_8k_pool.KD-85ZH8', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'KD-85ZH8', 'report_model': 'KD85ZH8', 'hardware': 'mt5893', 'board': 'mt5893', 'version_id': 'SONYTV.2020.KD_85ZH8', 'screen_param': '7680-4320-280', 'cast_model': 'KD-85ZH8'}, {'source': 'sony_8k_pool.KD-75ZH8', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'KD-75ZH8', 'report_model': 'KD75ZH8', 'hardware': 'mt5893', 'board': 'mt5893', 'version_id': 'SONYTV.2020.KD_75ZH8', 'screen_param': '7680-4320-260', 'cast_model': 'KD-75ZH8'}, {'source': 'samsung_8k_pool.QA85QN900A', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA85QN900A', 'report_model': 'QA85QN900A', 'hardware': 's5e9925', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2021.QN900A', 'screen_param': '7680-4320-280', 'cast_model': 'QA85QN900A'}, {'source': 'samsung_8k_pool.QA75QN900A', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA75QN900A', 'report_model': 'QA75QN900A', 'hardware': 's5e9925', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2021.QN900A', 'screen_param': '7680-4320-260', 'cast_model': 'QA75QN900A'}, {'source': 'samsung_8k_pool.QA85QN900B', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA85QN900B', 'report_model': 'QA85QN900B', 'hardware': 's5e9925', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2022.QN900B', 'screen_param': '7680-4320-280', 'cast_model': 'QA85QN900B'}, {'source': 'samsung_8k_pool.QA75QN900B', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA75QN900B', 'report_model': 'QA75QN900B', 'hardware': 's5e9925', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2022.QN900B', 'screen_param': '7680-4320-260', 'cast_model': 'QA75QN900B'}, {'source': 'samsung_8k_pool.QA85QN900C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA85QN900C', 'report_model': 'QA85QN900C', 'hardware': 's5e9935', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2023.QN900C', 'screen_param': '7680-4320-280', 'cast_model': 'QA85QN900C'}, {'source': 'samsung_8k_pool.QA75QN900C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA75QN900C', 'report_model': 'QA75QN900C', 'hardware': 's5e9935', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2023.QN900C', 'screen_param': '7680-4320-260', 'cast_model': 'QA75QN900C'}, {'source': 'samsung_8k_pool.QA85QN900D', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA85QN900D', 'report_model': 'QA85QN900D', 'hardware': 's5e9945', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2024.QN900D', 'screen_param': '7680-4320-280', 'cast_model': 'QA85QN900D'}, {'source': 'samsung_8k_pool.QA98QN990C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA98QN990C', 'report_model': 'QA98QN990C', 'hardware': 's5e9935', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2023.QN990C', 'screen_param': '7680-4320-320', 'cast_model': 'QA98QN990C'}, {'source': 'samsung_8k_pool.QA85QN800C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA85QN800C', 'report_model': 'QA85QN800C', 'hardware': 's5e9935', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2023.QN800C', 'screen_param': '7680-4320-280', 'cast_model': 'QA85QN800C'}, {'source': 'samsung_8k_pool.QA75QN800D', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA75QN800D', 'report_model': 'QA75QN800D', 'hardware': 's5e9945', 'board': 'neo8k', 'version_id': 'SAMSUNGTV.2024.QN800D', 'screen_param': '7680-4320-260', 'cast_model': 'QA75QN800D'}, {'source': 'lg_8k_pool.OLED88Z1PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED88Z1PCA', 'report_model': 'OLED88Z1PCA', 'hardware': 'alpha9gen4', 'board': 'lg8k', 'version_id': 'LGTV.2021.OLED88Z1', 'screen_param': '7680-4320-320', 'cast_model': 'OLED88Z1PCA'}, {'source': 'lg_8k_pool.OLED77Z1PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED77Z1PCA', 'report_model': 'OLED77Z1PCA', 'hardware': 'alpha9gen4', 'board': 'lg8k', 'version_id': 'LGTV.2021.OLED77Z1', 'screen_param': '7680-4320-260', 'cast_model': 'OLED77Z1PCA'}, {'source': 'lg_8k_pool.OLED88Z2PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED88Z2PCA', 'report_model': 'OLED88Z2PCA', 'hardware': 'alpha9gen5', 'board': 'lg8k', 'version_id': 'LGTV.2022.OLED88Z2', 'screen_param': '7680-4320-320', 'cast_model': 'OLED88Z2PCA'}, {'source': 'lg_8k_pool.OLED77Z2PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED77Z2PCA', 'report_model': 'OLED77Z2PCA', 'hardware': 'alpha9gen5', 'board': 'lg8k', 'version_id': 'LGTV.2022.OLED77Z2', 'screen_param': '7680-4320-260', 'cast_model': 'OLED77Z2PCA'}, {'source': 'lg_8k_pool.OLED88Z3PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED88Z3PCA', 'report_model': 'OLED88Z3PCA', 'hardware': 'alpha9gen6', 'board': 'lg8k', 'version_id': 'LGTV.2023.OLED88Z3', 'screen_param': '7680-4320-320', 'cast_model': 'OLED88Z3PCA'}, {'source': 'lg_8k_pool.OLED77Z3PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED77Z3PCA', 'report_model': 'OLED77Z3PCA', 'hardware': 'alpha9gen6', 'board': 'lg8k', 'version_id': 'LGTV.2023.OLED77Z3', 'screen_param': '7680-4320-260', 'cast_model': 'OLED77Z3PCA'}, {'source': 'lg_8k_pool.OLED88Z4PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED88Z4PCA', 'report_model': 'OLED88Z4PCA', 'hardware': 'alpha9gen7', 'board': 'lg8k', 'version_id': 'LGTV.2024.OLED88Z4', 'screen_param': '7680-4320-320', 'cast_model': 'OLED88Z4PCA'}, {'source': 'lg_8k_pool.86QNED99', 'brand': 'LG', 'manufacturer': 'LGE', 'model': '86QNED99', 'report_model': '86QNED99', 'hardware': 'alpha9gen4', 'board': 'lg8k', 'version_id': 'LGTV.2021.86QNED99', 'screen_param': '7680-4320-300', 'cast_model': '86QNED99'}, {'source': 'sony_4k_pool.XR-85X95K', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-85X95K', 'report_model': 'XR85X95K', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2022.XR_85X95K', 'screen_param': '3840-2160-300', 'cast_model': 'XR-85X95K'}, {'source': 'sony_4k_pool.XR-75X95K', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-75X95K', 'report_model': 'XR75X95K', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2022.XR_75X95K', 'screen_param': '3840-2160-280', 'cast_model': 'XR-75X95K'}, {'source': 'sony_4k_pool.XR-65X90K', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-65X90K', 'report_model': 'XR65X90K', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2022.XR_65X90K', 'screen_param': '3840-2160-260', 'cast_model': 'XR-65X90K'}, {'source': 'sony_4k_pool.XR-55X90K', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-55X90K', 'report_model': 'XR55X90K', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2022.XR_55X90K', 'screen_param': '3840-2160-240', 'cast_model': 'XR-55X90K'}, {'source': 'sony_4k_pool.XR-65A95K', 'brand': 'Sony', 'manufacturer': 'Sony', 'model': 'XR-65A95K', 'report_model': 'XR65A95K', 'hardware': 'mt5895', 'board': 'mt5895', 'version_id': 'SONYTV.2022.XR_65A95K', 'screen_param': '3840-2160-260', 'cast_model': 'XR-65A95K'}, {'source': 'samsung_4k_pool.QA85QN90C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA85QN90C', 'report_model': 'QA85QN90C', 'hardware': 's5e9935', 'board': 'neo4k', 'version_id': 'SAMSUNGTV.2023.QN90C', 'screen_param': '3840-2160-300', 'cast_model': 'QA85QN90C'}, {'source': 'samsung_4k_pool.QA75QN90C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA75QN90C', 'report_model': 'QA75QN90C', 'hardware': 's5e9935', 'board': 'neo4k', 'version_id': 'SAMSUNGTV.2023.QN90C', 'screen_param': '3840-2160-280', 'cast_model': 'QA75QN90C'}, {'source': 'samsung_4k_pool.QA65QN90C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA65QN90C', 'report_model': 'QA65QN90C', 'hardware': 's5e9935', 'board': 'neo4k', 'version_id': 'SAMSUNGTV.2023.QN90C', 'screen_param': '3840-2160-260', 'cast_model': 'QA65QN90C'}, {'source': 'samsung_4k_pool.QA55QN90C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA55QN90C', 'report_model': 'QA55QN90C', 'hardware': 's5e9935', 'board': 'neo4k', 'version_id': 'SAMSUNGTV.2023.QN90C', 'screen_param': '3840-2160-240', 'cast_model': 'QA55QN90C'}, {'source': 'samsung_4k_pool.QA65S95C', 'brand': 'Samsung', 'manufacturer': 'Samsung', 'model': 'QA65S95C', 'report_model': 'QA65S95C', 'hardware': 's5e9935', 'board': 'oled4k', 'version_id': 'SAMSUNGTV.2023.S95C', 'screen_param': '3840-2160-260', 'cast_model': 'QA65S95C'}, {'source': 'lg_4k_pool.OLED83C3PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED83C3PCA', 'report_model': 'OLED83C3PCA', 'hardware': 'alpha9gen6', 'board': 'lg4k', 'version_id': 'LGTV.2023.OLED83C3', 'screen_param': '3840-2160-300', 'cast_model': 'OLED83C3PCA'}, {'source': 'lg_4k_pool.OLED77C3PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED77C3PCA', 'report_model': 'OLED77C3PCA', 'hardware': 'alpha9gen6', 'board': 'lg4k', 'version_id': 'LGTV.2023.OLED77C3', 'screen_param': '3840-2160-280', 'cast_model': 'OLED77C3PCA'}, {'source': 'lg_4k_pool.OLED65C3PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED65C3PCA', 'report_model': 'OLED65C3PCA', 'hardware': 'alpha9gen6', 'board': 'lg4k', 'version_id': 'LGTV.2023.OLED65C3', 'screen_param': '3840-2160-260', 'cast_model': 'OLED65C3PCA'}, {'source': 'lg_4k_pool.OLED55C3PCA', 'brand': 'LG', 'manufacturer': 'LGE', 'model': 'OLED55C3PCA', 'report_model': 'OLED55C3PCA', 'hardware': 'alpha9gen6', 'board': 'lg4k', 'version_id': 'LGTV.2023.OLED55C3', 'screen_param': '3840-2160-240', 'cast_model': 'OLED55C3PCA'}, {'source': 'lg_4k_pool.86QNED90', 'brand': 'LG', 'manufacturer': 'LGE', 'model': '86QNED90', 'report_model': '86QNED90', 'hardware': 'alpha7gen5', 'board': 'lg4k', 'version_id': 'LGTV.2022.86QNED90', 'screen_param': '3840-2160-300', 'cast_model': '86QNED90'}, {'source': 'tcl_8k_pool.85X925PRO', 'brand': 'TCL', 'manufacturer': 'TCL', 'model': '85X925 PRO', 'report_model': '85X925PRO', 'hardware': 'mt9615', 'board': 'tcl8k', 'version_id': 'TCLTV.2021.X925PRO', 'screen_param': '7680-4320-280', 'cast_model': '85X925 PRO'}, {'source': 'tcl_8k_pool.75X925PRO', 'brand': 'TCL', 'manufacturer': 'TCL', 'model': '75X925 PRO', 'report_model': '75X925PRO', 'hardware': 'mt9615', 'board': 'tcl8k', 'version_id': 'TCLTV.2021.X925PRO', 'screen_param': '7680-4320-260', 'cast_model': '75X925 PRO'}, {'source': 'tcl_4k_pool.85C845', 'brand': 'TCL', 'manufacturer': 'TCL', 'model': '85C845', 'report_model': '85C845', 'hardware': 'mt9615', 'board': 'tcl4k', 'version_id': 'TCLTV.2023.C845', 'screen_param': '3840-2160-300', 'cast_model': '85C845'}, {'source': 'tcl_4k_pool.75C845', 'brand': 'TCL', 'manufacturer': 'TCL', 'model': '75C845', 'report_model': '75C845', 'hardware': 'mt9615', 'board': 'tcl4k', 'version_id': 'TCLTV.2023.C845', 'screen_param': '3840-2160-280', 'cast_model': '75C845'}, {'source': 'tcl_4k_pool.65C845', 'brand': 'TCL', 'manufacturer': 'TCL', 'model': '65C845', 'report_model': '65C845', 'hardware': 'mt9615', 'board': 'tcl4k', 'version_id': 'TCLTV.2023.C845', 'screen_param': '3840-2160-260', 'cast_model': '65C845'}, {'source': 'tcl_4k_pool.75C745', 'brand': 'TCL', 'manufacturer': 'TCL', 'model': '75C745', 'report_model': '75C745', 'hardware': 'mt9615', 'board': 'tcl4k', 'version_id': 'TCLTV.2023.C745', 'screen_param': '3840-2160-280', 'cast_model': '75C745'}, {'source': 'tcl_4k_pool.65C745', 'brand': 'TCL', 'manufacturer': 'TCL', 'model': '65C745', 'report_model': '65C745', 'hardware': 'mt9615', 'board': 'tcl4k', 'version_id': 'TCLTV.2023.C745', 'screen_param': '3840-2160-260', 'cast_model': '65C745'}, {'source': 'changhong_4k_pool.U65G7', 'brand': 'CHANGHONG', 'manufacturer': 'CHANGHONG', 'model': 'U65G7', 'report_model': 'U65G7', 'hardware': 'mt9632', 'board': 'changhong4k', 'version_id': 'CHANGHONGTV.2022.U65G7', 'screen_param': '3840-2160-260', 'cast_model': 'U65G7'}, {'source': 'changhong_4k_pool.U55G7', 'brand': 'CHANGHONG', 'manufacturer': 'CHANGHONG', 'model': 'U55G7', 'report_model': 'U55G7', 'hardware': 'mt9632', 'board': 'changhong4k', 'version_id': 'CHANGHONGTV.2022.U55G7', 'screen_param': '3840-2160-240', 'cast_model': 'U55G7'}, {'source': 'changhong_4k_pool.L55QCN1', 'brand': 'CHANGHONG', 'manufacturer': 'CHANGHONG', 'model': 'L55QCN1', 'report_model': 'L55QCN1', 'hardware': 'mt9632', 'board': 'changhong4k', 'version_id': 'CHANGHONGTV.2021.L55QCN1', 'screen_param': '3840-2160-240', 'cast_model': 'L55QCN1'}, {'source': 'changhong_4k_pool.U43QCN1', 'brand': 'CHANGHONG', 'manufacturer': 'CHANGHONG', 'model': 'U43QCN1', 'report_model': 'U43QCN1', 'hardware': 'mt9632', 'board': 'changhong4k', 'version_id': 'CHANGHONGTV.2021.U43QCN1', 'screen_param': '3840-2160-220', 'cast_model': 'U43QCN1'}, {'source': 'changhong_4k_pool.UD65YC5500UA', 'brand': 'CHANGHONG', 'manufacturer': 'CHANGHONG', 'model': 'UD65YC5500UA', 'report_model': 'UD65YC5500UA', 'hardware': 'mt9632', 'board': 'changhong4k', 'version_id': 'CHANGHONGTV.2020.UD65YC5500UA', 'screen_param': '3840-2160-260', 'cast_model': 'UD65YC5500UA'}]
 
 def random_device_template() -> dict:
-    return secrets.choice(DEVICE_PROFILE_POOL)
+    pool_8k = [t for t in DEVICE_PROFILE_POOL if '8k' in t.get('source', '')]
+    return secrets.choice(pool_8k if pool_8k else DEVICE_PROFILE_POOL)
 
 def device_profile_from_template(template: dict, android_id: str, mac: str) -> DeviceProfile:
     brand_id = sanitize_profile_id(template['brand'])
@@ -2371,19 +2373,93 @@ def fetch_abs_playlist(url, depth=0):
         else:
             out.append(ln)
     return '\n'.join(out)
-CHANNELS = [('cctv1', 'CCTV-1 综合', '2024078201', '600001859', 'fhd'), ('cctv2', 'CCTV-2 财经', '2024075401', '600001800', 'fhd'), ('cctv3', 'CCTV-3 综艺', '2024068501', '600001801', 'fhd'), ('cctv4', 'CCTV-4 中文国际', '2029797101', '600001814', 'fhd'), ('cctv5', 'CCTV-5 体育', '2024078401', '600001818', 'fhd'), ('cctv5p', 'CCTV-5+ 体育赛事', '2024078001', '600001817', 'fhd'), ('cctv6', 'CCTV-6 电影', '2013693901', '600108442', 'fhd'), ('cctv7', 'CCTV-7 国防军事', '2024072001', '600004092', 'fhd'), ('cctv8', 'CCTV-8 电视剧', '2029793001', '600001803', 'fhd'), ('cctv9', 'CCTV-9 纪录', '2024078601', '600004078', 'fhd'), ('cctv10', 'CCTV-10 科教', '2024078701', '600001805', 'fhd'), ('cctv11', 'CCTV-11 戏曲', '2027248701', '600001806', 'fhd'), ('cctv12', 'CCTV-12 社会与法', '2027248801', '600001807', 'fhd'), ('cctv13', 'CCTV-13 新闻', '2029797201', '600001811', 'fhd'), ('cctv14', 'CCTV-14 少儿', '2027248901', '600001809', 'fhd'), ('cctv15', 'CCTV-15 音乐', '2027249001', '600001815', 'fhd'), ('cctv16', 'CCTV-16 奥林匹克', '2027249101', '600098637', 'fhd'), ('cctv164k', 'CCTV-16 4K', '2027249301', '600099502', 'fhd'), ('cctv17', 'CCTV-17 农业农村', '2027249401', '600001810', 'fhd'), ('cctv4k', 'CCTV-4K 超高清', '2029810301', '600002264', 'fhd'), ('cctv8k', 'CCTV-8K 超高清', '2026774101', '600156816', 'fhd'), ('cgtn', 'CGTN', '2024181701', '600014550', 'fhd'), ('cgtnfr', 'CGTN 法语', '2024181801', '600084704', 'fhd'), ('cgtnru', 'CGTN 俄语', '2024181901', '600084758', 'fhd'), ('cgtnar', 'CGTN 阿拉伯语', '2024182001', '600084782', 'fhd'), ('cgtnes', 'CGTN 西班牙语', '2024182101', '600084744', 'fhd'), ('cgtndoc', 'CGTN 纪录', '2024182301', '600084781', 'fhd'), ('cctvfyjc', 'CCTV 风云剧场', '2025637103', '600099658', 'shd'), ('cctvdyjc', 'CCTV 第一剧场', '2026874203', '600099655', 'shd'), ('cctvhjjc', 'CCTV 怀旧剧场', '2026874303', '600099620', 'shd'), ('bjws', '北京卫视', '2024052703', '600002309', 'fhd'), ('jsws', '江苏卫视', '2024171103', '600002521', 'fhd'), ('dfws', '东方卫视', '2024054503', '600002483', 'fhd'), ('zjws', '浙江卫视', '2024054703', '600002520', 'fhd'), ('hnws', '湖南卫视', '2024054803', '600002475', 'fhd'), ('hbws', '湖北卫视', '2024171203', '600002508', 'fhd'), ('gdws', '广东卫视', '2024060903', '600002485', 'fhd'), ('gxws', '广西卫视', '2024060703', '600002509', 'fhd'), ('hljws', '黑龙江卫视', '2029797003', '600002498', 'fhd'), ('hainanws', '海南卫视', '2024055603', '600002506', 'fhd'), ('cqws', '重庆卫视', '2024061103', '600002531', 'fhd'), ('szws', '深圳卫视', '2024061303', '600002481', 'fhd'), ('scws', '四川卫视', '2024061403', '600002516', 'fhd'), ('henanws', '河南卫视', '2029797303', '600002525', 'fhd'), ('dnws', '东南卫视', '2024061503', '600002484', 'fhd'), ('gzws', '贵州卫视', '2024061603', '600002490', 'fhd'), ('jxws', '江西卫视', '2024061703', '600002503', 'fhd'), ('lnws', '辽宁卫视', '2024171303', '600002505', 'fhd'), ('ahws', '安徽卫视', '2024171403', '600002532', 'fhd'), ('hebws', '河北卫视', '2024171503', '600002493', 'fhd'), ('sdws', '山东卫视', '2029787903', '600002513', 'fhd'), ('tjws', '天津卫视', '2019927003', '600152137', 'fhd'), ('jlws', '吉林卫视', '2025561503', '600190405', 'fhd'), ('saxws', '陕西卫视', '2029795103', '600190400', 'fhd'), ('nxws', '宁夏卫视', '2025608503', '600190737', 'fhd'), ('nmgws', '内蒙古卫视', '2025561203', '600190401', 'fhd'), ('ynws', '云南卫视', '2025561303', '600190402', 'fhd'), ('shanxiws', '山西卫视', '2025560803', '600190407', 'fhd'), ('gsws', '甘肃卫视', '2025561703', '600190408', 'fhd'), ('qhws', '青海卫视', '2025559103', '600190406', 'fhd'), ('xizangws', '西藏卫视', '2025558003', '600190403', 'fhd'), ('xjws', '新疆卫视', '2019927403', '600152138', 'fhd'), ('cetv1', 'CETV-1', '2022823801', '600171827', 'fhd'), ('guoxue', '国学频道', '2029360403', '600213139', 'fhd')]
+CHANNELS = [('cctv1', 'CCTV-1 综合', '2024078201', '600001859', 'fhd'), ('cctv2', 'CCTV-2 财经', '2024075401', '600001800', 'fhd'), ('cctv3', 'CCTV-3 综艺', '2024068501', '600001801', 'fhd'), ('cctv4', 'CCTV-4 中文国际', '2029797101', '600001814', 'fhd'), ('cctv5', 'CCTV-5 体育', '2024078401', '600001818', 'fhd'), ('cctv5p', 'CCTV-5+ 体育赛事', '2024078001', '600001817', 'fhd'), ('cctv6', 'CCTV-6 电影', '2013693901', '600108442', 'fhd'), ('cctv7', 'CCTV-7 国防军事', '2024072001', '600004092', 'fhd'), ('cctv8', 'CCTV-8 电视剧', '2029793001', '600001803', 'fhd'), ('cctv9', 'CCTV-9 纪录', '2024078601', '600004078', 'fhd'), ('cctv10', 'CCTV-10 科教', '2024078701', '600001805', 'fhd'), ('cctv11', 'CCTV-11 戏曲', '2027248701', '600001806', 'fhd'), ('cctv12', 'CCTV-12 社会与法', '2027248801', '600001807', 'fhd'), ('cctv13', 'CCTV-13 新闻', '2029797201', '600001811', 'fhd'), ('cctv14', 'CCTV-14 少儿', '2027248901', '600001809', 'fhd'), ('cctv15', 'CCTV-15 音乐', '2027249001', '600001815', 'fhd'), ('cctv16', 'CCTV-16 奥林匹克', '2027249101', '600098637', 'fhd'), ('cctv164k', 'CCTV-16 4K', '2027249301', '600099502', 'fhd'), ('cctv17', 'CCTV-17 农业农村', '2027249401', '600001810', 'fhd'), ('cctv4k', 'CCTV-4K 超高清', '2029810301', '600002264', 'fhd'), ('cctv8k', 'CCTV-8K 超高清', '2026774101', '600156816', 'fhd'), ('cgtn', 'CGTN', '2024181701', '600014550', 'fhd'), ('cgtnfr', 'CGTN 法语', '2024181801', '600084704', 'fhd'), ('cgtnru', 'CGTN 俄语', '2024181901', '600084758', 'fhd'), ('cgtnar', 'CGTN 阿拉伯语', '2024182001', '600084782', 'fhd'), ('cgtnes', 'CGTN 西班牙语', '2024182101', '600084744', 'fhd'), ('cgtndoc', 'CGTN 纪录', '2024182301', '600084781', 'fhd'), ('cctvfyjc', 'CCTV 风云剧场', '2025637102', '600099658', 'shd'), ('cctvdyjc', 'CCTV 第一剧场', '2026874202', '600099655', 'shd'), ('cctvhjjc', 'CCTV 怀旧剧场', '2026874302', '600099620', 'shd'), ('bjws', '北京卫视', '2024052703', '600002309', 'fhd'), ('jsws', '江苏卫视', '2024171103', '600002521', 'fhd'), ('dfws', '东方卫视', '2024054503', '600002483', 'fhd'), ('zjws', '浙江卫视', '2024054703', '600002520', 'fhd'), ('hnws', '湖南卫视', '2024054803', '600002475', 'fhd'), ('hbws', '湖北卫视', '2024171203', '600002508', 'fhd'), ('gdws', '广东卫视', '2024060903', '600002485', 'fhd'), ('gxws', '广西卫视', '2024060703', '600002509', 'fhd'), ('hljws', '黑龙江卫视', '2029797003', '600002498', 'fhd'), ('hainanws', '海南卫视', '2024055603', '600002506', 'fhd'), ('cqws', '重庆卫视', '2024061103', '600002531', 'fhd'), ('szws', '深圳卫视', '2024061303', '600002481', 'fhd'), ('scws', '四川卫视', '2024061403', '600002516', 'fhd'), ('henanws', '河南卫视', '2029797303', '600002525', 'fhd'), ('dnws', '东南卫视', '2024061503', '600002484', 'fhd'), ('gzws', '贵州卫视', '2024061603', '600002490', 'fhd'), ('jxws', '江西卫视', '2024061703', '600002503', 'fhd'), ('lnws', '辽宁卫视', '2024171303', '600002505', 'fhd'), ('ahws', '安徽卫视', '2024171403', '600002532', 'fhd'), ('hebws', '河北卫视', '2024171503', '600002493', 'fhd'), ('sdws', '山东卫视', '2029787903', '600002513', 'fhd'), ('tjws', '天津卫视', '2019927003', '600152137', 'fhd'), ('jlws', '吉林卫视', '2025561503', '600190405', 'fhd'), ('saxws', '陕西卫视', '2029795103', '600190400', 'fhd'), ('nxws', '宁夏卫视', '2025608503', '600190737', 'fhd'), ('nmgws', '内蒙古卫视', '2025561203', '600190401', 'fhd'), ('ynws', '云南卫视', '2025561303', '600190402', 'fhd'), ('shanxiws', '山西卫视', '2025560803', '600190407', 'fhd'), ('gsws', '甘肃卫视', '2025561703', '600190408', 'fhd'), ('qhws', '青海卫视', '2025559103', '600190406', 'fhd'), ('xizangws', '西藏卫视', '2025558003', '600190403', 'fhd'), ('xjws', '新疆卫视', '2019927403', '600152138', 'fhd'), ('cetv1', 'CETV-1', '2022823801', '600171827', 'fhd'), ('guoxue', '国学频道', '2029360403', '600213139', 'fhd')]
 # 仅保留央视系频道（cctv*/cgtn*），彻底去掉地方台和其他频道
 CHANNELS = [c for c in CHANNELS if c[0].startswith('cctv') or c[0].startswith('cgtn')]
-TVG_IDS = {'cctv1': 'CCTV1', 'cctv2': 'CCTV2', 'cctv3': 'CCTV3', 'cctv4': 'CCTV4', 'cctv5': 'CCTV5', 'cctv5p': 'CCTV5+', 'cctv6': 'CCTV6', 'cctv7': 'CCTV7', 'cctv8': 'CCTV8', 'cctv9': 'CCTV9', 'cctv10': 'CCTV10', 'cctv11': 'CCTV11', 'cctv12': 'CCTV12', 'cctv13': 'CCTV13', 'cctv14': 'CCTV14', 'cctv15': 'CCTV15', 'cctv16': 'CCTV16', 'cctv164k': 'CCTV16', 'cctv17': 'CCTV17', 'cctv4k': 'CCTV4K', 'cgtnfr': 'CGTN法语', 'cgtnru': 'CGTN俄语', 'cgtnar': 'CGTN阿语', 'cgtnes': 'CGTN西语', 'cgtndoc': 'CGTN纪录', 'cctvdyjc': 'CCTV第一剧场', 'cctvfyjc': 'CCTV风云剧场', 'cctvhjjc': 'CCTV怀旧剧场', 'bjws': '北京卫视', 'jsws': '江苏卫视', 'dfws': '东方卫视', 'zjws': '浙江卫视', 'hnws': '湖南卫视', 'hbws': '湖北卫视', 'gdws': '广东卫视', 'gxws': '广西卫视', 'hljws': '黑龙江卫视', 'hainanws': '海南卫视', 'cqws': '重庆卫视', 'szws': '深圳卫视', 'scws': '四川卫视', 'henanws': '河南卫视', 'dnws': '东南卫视', 'gzws': '贵州卫视', 'jxws': '江西卫视', 'lnws': '辽宁卫视', 'ahws': '安徽卫视', 'hebws': '河北卫视', 'sdws': '山东卫视', 'tjws': '天津卫视', 'jlws': '吉林卫视', 'saxws': '陕西卫视', 'nxws': '宁夏卫视', 'nmgws': '内蒙古卫视', 'ynws': '云南卫视', 'shanxiws': '山西卫视', 'qhws': '青海卫视', 'xizangws': '西藏卫视', 'xjws': '新疆卫视', 'gsws': '甘肃卫视', 'guoxue': '国学'}
+TVG_IDS = {'cctv1': 'CCTV1', 'cctv2': 'CCTV2', 'cctv3': 'CCTV3', 'cctv4': 'CCTV4', 'cctv5': 'CCTV5', 'cctv5p': 'CCTV5+', 'cctv6': 'CCTV6', 'cctv7': 'CCTV7', 'cctv8': 'CCTV8', 'cctv9': 'CCTV9', 'cctv10': 'CCTV10', 'cctv11': 'CCTV11', 'cctv12': 'CCTV12', 'cctv13': 'CCTV13', 'cctv14': 'CCTV14', 'cctv15': 'CCTV15', 'cctv16': 'CCTV16', 'cctv164k': 'CCTV16', 'cctv17': 'CCTV17', 'cctv4k': 'CCTV4K', 'cctv8k': 'CCTV-8K', 'cgtn': 'CGTN英语', 'cgtnfr': 'CGTN法语', 'cgtnru': 'CGTN俄语', 'cgtnar': 'CGTN阿语', 'cgtnes': 'CGTN西语', 'cgtndoc': 'CGTN纪录', 'cctvdyjc': 'CCTV第一剧场', 'cctvfyjc': 'CCTV风云剧场', 'cctvhjjc': 'CCTV怀旧剧场', 'cetv1': 'CETV1', 'bjws': '北京卫视', 'jsws': '江苏卫视', 'dfws': '东方卫视', 'zjws': '浙江卫视', 'hnws': '湖南卫视', 'hbws': '湖北卫视', 'gdws': '广东卫视', 'gxws': '广西卫视', 'hljws': '黑龙江卫视', 'hainanws': '海南卫视', 'cqws': '重庆卫视', 'szws': '深圳卫视', 'scws': '四川卫视', 'henanws': '河南卫视', 'dnws': '东南卫视', 'gzws': '贵州卫视', 'jxws': '江西卫视', 'lnws': '辽宁卫视', 'ahws': '安徽卫视', 'hebws': '河北卫视', 'sdws': '山东卫视', 'tjws': '天津卫视', 'jlws': '吉林卫视', 'saxws': '陕西卫视', 'nxws': '宁夏卫视', 'nmgws': '内蒙古卫视', 'ynws': '云南卫视', 'shanxiws': '山西卫视', 'qhws': '青海卫视', 'xizangws': '西藏卫视', 'xjws': '新疆卫视', 'gsws': '甘肃卫视', 'guoxue': '国学'}
 LOGO_BASE = 'https://garysclub.sharewithyou.dpdns.org/logos/ysp-live-logos'
 UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
 REFRESH_INTERVAL = 10
 IDLE_TIMEOUT = 120
 WINDOW = 300
-MAX_SEGS = 60
+MAX_SEGS = 120
 BK_URL_TTL = 300
 BACKEND_CHANNELS = {'cctv1', 'cctv2', 'cctv3', 'cctv4', 'cctv5', 'cctv5p', 'cctv7', 'cctv8', 'cctv9', 'cctv10', 'cctv11', 'cctv12', 'cctv13', 'cctv14', 'cctv15', 'cctv16', 'cctv17', 'cctv4k', 'cctv8k', 'cctv164k', 'cgtn', 'cgtnfr', 'cgtnru', 'cgtnar', 'cgtnes', 'cgtndoc'}
 TRUE_4K_CHANNELS = {'cctv4k', 'cctv8k', 'cctv164k'}
+
+
+TIMESHIFT_SUPPORTED = {
+    "cctv1", "cctv2", "cctv3", "cctv4", "cctv5", "cctv5p", "cctv6", "cctv7", "cctv8", "cctv9", "cctv10", "cctv13", "cctv8k",
+    "cgtn", "cgtnfr", "cgtnru", "cgtnar", "cgtnes", "cgtndoc",
+}
+
+def get_channel_group(slug: str) -> str:
+    if slug in ('cctv4k', 'cctv8k', 'cctv164k'):
+        return "央视UHD"
+    if slug.startswith("cgtn"):
+        return "CGTN"
+    return "央视FHD"
+
+def parse_catchup_time_val(val_str: str | None) -> int | None:
+    if not val_str:
+        return None
+    val = val_str.strip()
+    if not val:
+        return None
+    digits = "".join(c for c in val if c.isdigit())
+    if not digits:
+        return None
+    if len(digits) == 10:
+        return int(digits)
+    if len(digits) == 13:
+        return int(int(digits) / 1000)
+    cst = datetime.timezone(datetime.timedelta(hours=8))
+    if len(digits) == 14:
+        try:
+            dt = datetime.datetime.strptime(digits, "%Y%m%d%H%M%S").replace(tzinfo=cst)
+            return int(dt.timestamp())
+        except Exception:
+            pass
+    if len(digits) == 12:
+        try:
+            dt = datetime.datetime.strptime(digits, "%Y%m%d%H%M").replace(tzinfo=cst)
+            return int(dt.timestamp())
+        except Exception:
+            pass
+    return None
+
+def parse_catchup_query(query_str: str) -> tuple[int, int] | None:
+    if not query_str:
+        return None
+    qs = urllib.parse.parse_qs(query_str)
+    now = int(time.time())
+    start_ts = None
+    end_ts = None
+    if "playseek" in qs:
+        ps = qs["playseek"][0]
+        if "-" in ps:
+            parts = ps.split("-", 1)
+            start_ts = parse_catchup_time_val(parts[0])
+            end_ts = parse_catchup_time_val(parts[1])
+        else:
+            start_ts = parse_catchup_time_val(ps)
+    if not start_ts and "start" in qs:
+        start_ts = parse_catchup_time_val(qs["start"][0])
+    if not end_ts and "end" in qs:
+        end_ts = parse_catchup_time_val(qs["end"][0])
+    if not start_ts and "utc" in qs:
+        start_ts = parse_catchup_time_val(qs["utc"][0])
+    if not end_ts and "lutc" in qs:
+        end_ts = parse_catchup_time_val(qs["lutc"][0])
+    if not start_ts and "starttime" in qs:
+        start_ts = parse_catchup_time_val(qs["starttime"][0])
+    if not end_ts and "endtime" in qs:
+        end_ts = parse_catchup_time_val(qs["endtime"][0])
+    if start_ts is not None:
+        if end_ts is None or end_ts <= start_ts:
+            end_ts = max(start_ts + 60, min(start_ts + 7200, now))
+        return start_ts, end_ts
+    return None
 
 class Channel:
 
@@ -2398,6 +2474,7 @@ class Channel:
         self.last_error = ''
         self.last_ok = 0.0
         self.mode = 'jce'
+        self.last_pdt = ''
         self.bk_urls = []
         self.bk_urls_time = 0.0
         self.bk_playlist = ''
@@ -2439,15 +2516,30 @@ def jce_refresh(ch):
     segs = jce_fetch(ch)
     with ch.lock:
         added = 0
-        for dur, pdt, url in segs:
-            key = seg_key(url, pdt)
-            if key in ch.segments:
-                ch.segments[key][3] = url
-                continue
-            ch.seq += 1
-            ch.segments[key] = [ch.seq, dur, pdt, url]
-            ch.order.append(key)
-            added += 1
+        if not ch.order:
+            init_segs = segs[-25:] if len(segs) > 25 else segs
+            for dur, pdt, url in init_segs:
+                key = seg_key(url, pdt)
+                ch.seq += 1
+                ch.segments[key] = [ch.seq, dur, pdt, url]
+                ch.order.append(key)
+                added += 1
+                if pdt:
+                    ch.last_pdt = pdt
+        else:
+            for dur, pdt, url in segs:
+                if pdt and ch.last_pdt and pdt <= ch.last_pdt:
+                    continue
+                key = seg_key(url, pdt)
+                if key in ch.segments:
+                    ch.segments[key][3] = url
+                    continue
+                ch.seq += 1
+                ch.segments[key] = [ch.seq, dur, pdt, url]
+                ch.order.append(key)
+                if pdt:
+                    ch.last_pdt = pdt
+                added += 1
         while len(ch.order) > MAX_SEGS:
             ch.segments.pop(ch.order.popleft(), None)
         ch.last_error = ''
@@ -2474,8 +2566,6 @@ def bk_refresh(ch):
                 return True
             except urllib.error.HTTPError as e:
                 last_err = 'HTTPError: HTTP %s' % e.code
-                if e.code == 403:
-                    time.sleep(2)
                 continue
             except Exception as e:
                 last_err = '%s: %s' % (type(e).__name__, e)
@@ -2486,6 +2576,7 @@ def bk_refresh(ch):
                 log('%s 地址疑似过期, 已重取' % ch.slug)
             except Exception:
                 pass
+    ch.bk_urls = []
     ch.bk_urls_time = 0
     raise RuntimeError(last_err[:120] or 'bk playlist failed')
 
@@ -2528,6 +2619,7 @@ def ensure_channel(ch):
         if cache_stale:
             ch.segments.clear()
             ch.order.clear()
+            ch.last_pdt = ''
             ch.bk_playlist = ''
             need_fetch = True
         else:
@@ -2585,7 +2677,7 @@ _last_channel_request: dict[str, float] = {}
 _last_channel_request_lock = threading.Lock()
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'ysp-live/6.2'
+    server_version = 'ysp-live/7.4'
 
     def log_message(self, fmt, *args):
         pass
@@ -2608,38 +2700,33 @@ class Handler(BaseHTTPRequestHandler):
         self.do_GET(head_only=True)
 
     def do_GET(self, head_only=False):
-        path = urllib.parse.urlparse(self.path).path
+        parts = urllib.parse.urlsplit(self.path)
+        path = parts.path
+        catchup_times = parse_catchup_query(parts.query)
         if path in ('/', '/index.html'):
             self._send(200, index_page(server_port), 'text/html; charset=utf-8', head_only=head_only)
             return
         if path == '/health':
             self._send(200, 'ok', head_only=head_only)
             return
-        if path in ('/all.m3u', '/cctv.m3u'):
+        if path == '/cctv.m3u':
             host = self.headers.get('Host', f'localhost:{server_port}')
             proto = self.headers.get('X-Forwarded-Proto', 'http')
-            lines = ['#EXTM3U url-tvg="https://epg.112114.xyz/pp.xml.gz"']
+            lines = [
+                '#EXTM3U url-tvg="https://live.fanmingming.com/e.xml,https://epg.112114.xyz/pp.xml.gz"',
+                '#EXT-X-APTV-PREVIEW: FALSE',
+                '#EXT-X-APTV-LATENCY: FALSE',
+                '#EXT-X-APTV-LOGO: FALSE'
+            ]
             for slug, name, _s, _p, _d in CHANNELS:
-                # /cctv.m3u 仅含央视系：cctv* 和 cgtn*，去掉地方卫视
-                if path == '/cctv.m3u' and not (slug.startswith('cctv') or slug.startswith('cgtn')):
-                    continue
-                # 分组
-                if slug in ('cctv4k', 'cctv8k', 'cctv164k'):
-                    group = '央视UHD'
-                elif slug.startswith('cgtn'):
-                    group = 'CGTN'
-                elif slug.startswith('cctv'):
-                    group = '央视FHD'
-                elif slug.endswith('ws'):
-                    group = '地方卫视'
-                else:
-                    group = '其他'
                 attrs = ''
                 tid = TVG_IDS.get(slug)
                 if tid:
                     attrs += ' tvg-id="%s"' % tid
-                attrs += ' tvg-logo="%s/%s.png"' % (LOGO_BASE, slug)
-                attrs += ' group-title="%s"' % group
+                grp = get_channel_group(slug)
+                attrs += ' tvg-logo="%s/%s.png" group-title="%s"' % (LOGO_BASE, slug, grp)
+                if slug in TIMESHIFT_SUPPORTED:
+                    attrs += ' catchup="append" catchup-days="7" catchup-source="?playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}"'
                 lines.append('#EXTINF:-1%s tvg-name="%s",%s' % (attrs, name, name))
                 lines.append('%s://%s/%s.m3u8' % (proto, host, slug))
             self._send(200, '\n'.join(lines) + '\n', 'application/vnd.apple.mpegurl', head_only=head_only)
@@ -2735,6 +2822,15 @@ class Handler(BaseHTTPRequestHandler):
             if not ch:
                 self._send(404, '未知频道\n', head_only=head_only)
                 return
+            if catchup_times and (slug in TIMESHIFT_SUPPORTED):
+                start_ts, end_ts = catchup_times
+                try:
+                    m3u8_url = jce_timeshift_url(ch.pid, ch.sid, start_ts, end_ts, ch.defn)
+                    pl = fetch_abs_playlist(m3u8_url)
+                    self._send(200, pl, 'application/vnd.apple.mpegurl', head_only=head_only)
+                    return
+                except Exception as e:
+                    log('回看/时移获取失败 [%s] (%d-%d): %s，回退直播' % (slug, start_ts, end_ts, e))
             if slug in BACKEND_CHANNELS and resolver_ready() and (resolver is not None):
                 now = now_f64()
                 client_ip = self.client_address[0] if hasattr(self, 'client_address') and self.client_address else 'local'
@@ -2748,7 +2844,6 @@ class Handler(BaseHTTPRequestHandler):
                         for k in [k for k, v in _last_channel_request.items() if v < cutoff]:
                             _last_channel_request.pop(k, None)
 
-                # 用户新打开或关掉后重新打开频道（距上次请求超过 5 秒），优先保证 4K/高码率：清除此频道的失败冷却
                 if (now - last_req) > 5.0:
                     resolver.clear_channel_cooldown(slug)
 
@@ -2777,13 +2872,16 @@ def index_page(port: int):
     items = []
     k4 = resolver_ready()
     for slug, name, _s, _p, _d in CHANNELS:
-        tag = ''
+        tags = []
         if slug in TRUE_4K_CHANNELS:
-            tag = ' <b style="color:#c00">[真4K]</b>' if k4 else ' <span style="color:#888">[4K准备中]</span>'
+            tags.append('<b style="color:#c00">[真4K]</b>' if k4 else '<span style="color:#888">[4K准备中]</span>')
         elif slug in BACKEND_CHANNELS:
-            tag = ' <b style="color:#c00">[高码率]</b>' if k4 else ' <span style="color:#888">[准备中]</span>'
-        items.append('<li><a href="/%s.m3u8">%s</a>%s <span>/%s.m3u8</span></li>' % (slug, name, tag, slug))
-    return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>央视频全频道直播</title><style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:720px;margin:0 auto;padding:20px;}li{margin:6px 0;}span{color:#888;font-size:12px;margin-left:8px;}</style></head><body><h2>央视频全频道直播 (%d 路%s)</h2><p>把链接粘贴到播放器即可观看，单端口 (:%d) 提供全部播放列表与分片转发。</p><p>聚合订阅: <a href="/all.m3u">/all.m3u</a> (64 路一次导入)</p><ul>%s</ul></body></html>' % (len(items), '，含真4K' if k4 else '', port, ''.join(items))
+            tags.append('<b style="color:#c00">[高码率]</b>' if k4 else '<span style="color:#888">[准备中]</span>')
+        if slug in TIMESHIFT_SUPPORTED:
+            tags.append('<span style="color:#090;font-size:12px">[7天时移回看]</span>')
+        tag_str = (' ' + ' '.join(tags)) if tags else ''
+        items.append('<li><a href="/%s.m3u8">%s</a>%s <span>/%s.m3u8</span></li>' % (slug, name, tag_str, slug))
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>央视频全频道直播</title><style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:760px;margin:0 auto;padding:20px;}li{margin:6px 0;}span{color:#888;font-size:12px;margin-left:8px;}</style></head><body><h2>央视频全频道直播 (%d 路%s)</h2><p>把链接粘贴到播放器即可观看，单端口 (:%d) 提供全部播放列表与分片转发。</p><p>聚合订阅: <a href="/cctv.m3u">/cctv.m3u</a> (30 路央视一次导入，已集成 7 天回看时移与多源 EPG)</p><ul>%s</ul></body></html>' % (len(items), '，含真4K' if k4 else '', port, ''.join(items))
 
 def init_resolver():
     if resolver is None:
@@ -2819,7 +2917,13 @@ def main():
     args = ap.parse_args()
     server_port = args.port
     here = os.path.dirname(os.path.abspath(__file__))
-    engine_args = argparse.Namespace(host=args.bind, port=args.port, timeout=15.0, insecure_tls=False, cache_ttl=600.0, stale_while_refresh_ttl=120.0, refresh_error_cooldown=30.0, playlist_cache_ttl=0.0, background_refresh_queue_limit=4, http_workers=16, http_queue_limit=1000, identity_reset_error_threshold=0, identity_reset_cooldown=300.0, refresh_interval=1.0, control_step_jitter_min_ms=0, control_step_jitter_max_ms=0, heartbeat_interval=30.0, heartbeat_ttl_guard=60.0, session_ttl=7200.0, meta_json=os.path.join(here, 'proxy-cache-state-rs.json'), device_json=os.path.join(here, 'device-state-rs.json'))
+    data_dir = os.environ.get('YSP_DATA_DIR', here)
+    if data_dir and not os.path.exists(data_dir):
+        try:
+            os.makedirs(data_dir, exist_ok=True)
+        except OSError:
+            data_dir = here
+    engine_args = argparse.Namespace(host=args.bind, port=args.port, timeout=15.0, insecure_tls=False, cache_ttl=600.0, stale_while_refresh_ttl=120.0, refresh_error_cooldown=30.0, playlist_cache_ttl=0.0, background_refresh_queue_limit=4, http_workers=16, http_queue_limit=1000, identity_reset_error_threshold=0, identity_reset_cooldown=300.0, refresh_interval=1.0, control_step_jitter_min_ms=0, control_step_jitter_max_ms=0, heartbeat_interval=30.0, heartbeat_ttl_guard=60.0, session_ttl=7200.0, meta_json=os.path.join(data_dir, 'proxy-cache-state-rs.json'), device_json=os.path.join(data_dir, 'device-state-rs.json'))
     resolve_paths(engine_args)
     resolver = Resolver(engine_args)
     if not args.no_4k:
@@ -2828,9 +2932,9 @@ def main():
         resolver.start_keep_warm_worker()
         threading.Thread(target=init_resolver, daemon=True, name='engine-init').start()
     srv = ThreadingHTTPServer((args.bind, args.port), Handler)
-    log('ysp-live v6.2 启动: %d 个频道, 监听端口 %d (单端口架构)' % (len(CHANNEL_MAP), args.port))
+    log('ysp-live v7.4 启动: %d 个频道, 监听端口 %d (单端口架构)' % (len(CHANNEL_MAP), args.port))
     log('首页: http://localhost:%d/' % args.port)
-    log('全频道订阅: http://localhost:%d/all.m3u' % args.port)
+    log('央视订阅: http://localhost:%d/cctv.m3u' % args.port)
     log('诊断信息: http://localhost:%d/diag' % args.port)
     try:
         srv.serve_forever()

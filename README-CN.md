@@ -1,4 +1,4 @@
-# ysp-live v6.2
+# ysp-live v7.4
 
 > **致谢**
 > 1. 感谢 IPTV 总部分享的算法源码
@@ -13,13 +13,16 @@
 
 - **30 路央视频道**，带分组（`group-title`）：央视FHD / 央视UHD / CGTN
 - **真 4K 频道**：CCTV-4K、CCTV-8K、CCTV-16 4K（设备协议）
+- **7 天回看与时移**：19 路频道支持 7 天节目回看（`catchup="append"`）
 - 纯 Python，零依赖，单端口（8767）
 - 后台自动保活：每 30 秒心跳、静默续期 Session、24/7 保活
+- 设备身份持久化：`./data` 数据卷，容器重建不丢注册
+- APTV 播放器优化：关闭预览/测速，避免触发风控限流
 
 ## VPS 一键部署
 
 ```bash
-cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v6.2.zip "https://github.com/waastudios/ysptp-rs/releases/download/v6.2/ysp-live-docker-v6.2.zip" && python3 -c "import zipfile; zipfile.ZipFile('v6.2.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build
+cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v7.4.zip "https://github.com/waastudios/ysptp-rs/releases/download/v7.4/ysp-live-docker-v7.4.zip" && python3 -c "import zipfile; zipfile.ZipFile('v7.4.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build
 ```
 
 等约 30 秒，看日志出现 `设备协议就绪`：
@@ -36,12 +39,11 @@ docker logs -f ysp-live
 curl -s ifconfig.me
 ```
 
-- 聚合订阅（30 路央视）：`http://<VPS公网IP>:8767/all.m3u`
-- 央视订阅（同上，带分组）：`http://<VPS公网IP>:8767/cctv.m3u`
+- 央视订阅（30 路，带分组）：`http://<VPS公网IP>:8767/cctv.m3u`
 - 首页：`http://<VPS公网IP>:8767/`
 - 诊断：`http://<VPS公网IP>:8767/diag`
 
-> 注意：`localhost` 只能本机用。VPS 上必须换成公网 IP；局域网用内网 IP（如 `http://192.168.1.10:8767/all.m3u`）。
+> 注意：`localhost` 只能本机用。VPS 上必须换成公网 IP；局域网用内网 IP（如 `http://192.168.1.10:8767/cctv.m3u`）。
 
 订阅分组：
 - 央视FHD：CCTV-1~17、5+、6、三个剧场等

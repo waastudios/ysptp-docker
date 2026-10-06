@@ -1,4 +1,4 @@
-# ysp-live v6.2
+# ysp-live v7.4
 
 > **Acknowledgments**
 > 1. Thanks to IPTV Official Group for sharing the algorithm source code
@@ -13,13 +13,16 @@ CCTV live streaming via Docker — **CCTV channels only** (30 channels): CCTV-1~
 
 - **30 CCTV channels** with groups (`group-title`): 央视FHD / 央视UHD / CGTN
 - **True 4K channels**: CCTV-4K, CCTV-8K, CCTV-16 4K via device protocol
+- **7-day catchup & timeshift**: 19 channels support 7-day program replay (`catchup="append"`)
 - Pure Python, zero dependencies, single port (8767)
 - Auto keep-alive: heartbeat every 30s, silent session renewal, 24/7 background worker
+- Persistent device identity: `./data` volume survives container rebuilds
+- APTV player optimized: no preview/latency probing to avoid triggering rate limits
 
 ## One-command VPS deploy
 
 ```bash
-cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v6.2.zip "https://github.com/waastudios/ysptp-rs/releases/download/v6.2/ysp-live-docker-v6.2.zip" && python3 -c "import zipfile; zipfile.ZipFile('v6.2.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build
+cd /opt && curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" -o v7.4.zip "https://github.com/waastudios/ysptp-rs/releases/download/v7.4/ysp-live-docker-v7.4.zip" && python3 -c "import zipfile; zipfile.ZipFile('v7.4.zip').extractall('/opt/ysp-live-docker')" && cd /opt/ysp-live-docker && docker compose up -d --build
 ```
 
 Wait ~30s, then check logs for `设备协议就绪` (device protocol ready):
@@ -36,8 +39,7 @@ Get your VPS public IP:
 curl -s ifconfig.me
 ```
 
-- Aggregated subscription (30 CCTV channels): `http://<VPS_PUBLIC_IP>:8767/all.m3u`
-- CCTV-only subscription (same 30, with groups): `http://<VPS_PUBLIC_IP>:8767/cctv.m3u`
+- CCTV subscription (30 channels, with groups): `http://<VPS_PUBLIC_IP>:8767/cctv.m3u`
 - Homepage: `http://<VPS_PUBLIC_IP>:8767/`
 - Diagnostics: `http://<VPS_PUBLIC_IP>:8767/diag`
 
