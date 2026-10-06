@@ -40,7 +40,10 @@ curl -s ifconfig.me
 ```
 
 - CCTV subscription (30 channels, with groups): `http://<VPS_PUBLIC_IP>:8767/cctv.m3u`
-- Aggregated EPG (30 channels, refreshes every 6h): `http://<VPS_PUBLIC_IP>:8767/epg.xml`
+- Aggregated EPG (30 channels, refreshes every 6h):
+  ```
+  http://localhost:8767/epg.xml
+  ```
 - Homepage: `http://<VPS_PUBLIC_IP>:8767/`
 - Diagnostics: `http://<VPS_PUBLIC_IP>:8767/diag`
 
@@ -60,7 +63,10 @@ ufw allow 8767/tcp
 
 This project ships a built-in aggregated EPG endpoint — no need to configure third-party EPG sources manually:
 
-- URL: `http://<VPS_PUBLIC_IP>:8767/epg.xml`
+- URL (copy-paste ready; replace `localhost` with your VPS public IP or LAN IP):
+  ```
+  http://localhost:8767/epg.xml
+  ```
 - Content: programme guide for only the 30 channels in this project (CCTV FHD / CCTV UHD / CGTN); irrelevant channels are filtered out
 - Upstream sources (merged automatically; the two complement each other, one going down won't break the other):
   - `https://live.fanmingming.com/e.xml`
