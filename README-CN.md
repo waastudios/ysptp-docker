@@ -61,6 +61,19 @@ curl -s ifconfig.me
 ufw allow 8767/tcp
 ```
 
+## EPG 节目单订阅
+
+本项目自带聚合 EPG 接口，开箱即用，不用再手动填第三方 EPG 源：
+
+- 地址：`http://<VPS公网IP>:8767/epg.xml`
+- 内容：只包含本项目 30 路频道的节目单（央视FHD/央视UHD/CGTN），无用频道已过滤
+- 数据源：自动合并以下两个上游 EPG（两源互补，单个源挂了不影响）：
+  - `https://live.fanmingming.com/e.xml`
+  - `https://epg.112114.xyz/pp.xml.gz`
+- 刷新：每 6 小时自动更新；首次访问时后台拉取，稍等片刻再刷新即可
+
+`/cctv.m3u` 订阅已默认指向该地址，播放器会自动加载节目单。
+
 ## 注意
 
 - **带宽**：看 4K 时 VPS 会中继视频流量（约 15GB/小时，按 35Mbps 算）。离央视 CDN 远的 VPS（如美国）看 4K 可能卡顿，推荐用亚洲 VPS。
