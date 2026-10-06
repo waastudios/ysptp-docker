@@ -93,3 +93,12 @@ docker logs -f ysp-live        # logs
 docker compose restart         # restart
 docker compose down            # stop
 ```
+
+## Uninstall
+
+```bash
+cd /opt/ysp-live-docker && docker compose down -v
+docker rmi ysp-live:v7.4
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v7.4.zip
+```
+`docker compose down -v` also removes the device registration data.
