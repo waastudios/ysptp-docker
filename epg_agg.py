@@ -34,6 +34,14 @@ REFRESH_INTERVAL = 6 * 3600
 FETCH_TIMEOUT = 60
 
 
+def _bust_url(url: str) -> str:
+    """fanmingming 的 CDN 缓存激进，加时间戳参数强制回源"""
+    if "fanmingming.com" in url:
+        sep = "&" if "?" in url else "?"
+        return f"{url}{sep}_t={int(time.time())}"
+    return url
+
+
 class EpgAggregator:
     """EPG 聚合器：拉取、过滤、合并、缓存。"""
 
@@ -99,6 +107,7 @@ class EpgAggregator:
         t.start()
 
     def _fetch(self, url: str) -> bytes:
+        url = _bust_url(url)
         req = urllib.request.Request(
             url,
             headers={"User-Agent": "Mozilla/5.0 (compatible; ysp-epg/1.0)"},
@@ -107,7 +116,7 @@ class EpgAggregator:
             return resp.read()
 
     def _parse(self, data: bytes, url: str) -> ET.Element:
-        if url.endswith(".gz"):
+        if ".gz" in url:
             data = gzip.decompress(data)
         # 容错解析：忽略编码问题
         return ET.fromstring(data)
