@@ -94,6 +94,18 @@ docker compose restart         # 重启
 docker compose down            # 停止
 ```
 
+## 更新日志
+
+### v9.0 (2026-10-07)
+- 上游：双设备热备池（0ms 切换）、400 智能自愈重试
+- 默认 26 路走设备协议原生高码流
+- 本定制版：30 路（仅 CCTV/CGTN），分组 央视FHD/央视UHD/CGTN
+- 内置 EPG 聚合（`/epg.xml`），4K 频道锁死真 4K
+
+### v8.1
+- 双引擎：Python 主网关 + Node.js WASM 兜底，四层故障切换
+- 30 路频道，EPG 聚合
+
 ## 卸载
 
 ```bash
