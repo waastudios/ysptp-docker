@@ -1,4 +1,4 @@
-# ysp-live v8.1
+# ysp-live v9.0
 
 > **致谢**
 > 1. 感谢 [IPTV 总部](http://t.me/iptvorganization)分享的算法源码
