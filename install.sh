@@ -1,9 +1,9 @@
 #!/bin/bash
-# ysp-live v8.1 一键部署脚本
+# ysp-live v9.0 一键部署脚本
 set -e
 cd /opt
-curl -sSL -o v8.1.zip "https://github.com/waastudios/ysptp-docker/releases/download/v8.1/ysp-live-docker-v8.1.zip"
-python3 -c "import zipfile;zipfile.ZipFile('v8.1.zip').extractall('/opt/ysp-live-docker')"
+curl -sSL -o v9.0.zip "https://github.com/waastudios/ysptp-docker/releases/download/v9.0/ysp-live-docker-v9.0.zip"
+python3 -c "import zipfile;zipfile.ZipFile('v9.0.zip').extractall('/opt/ysp-live-docker')"
 cd /opt/ysp-live-docker
 docker compose up -d --build
 IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
