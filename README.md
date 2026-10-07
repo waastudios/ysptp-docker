@@ -1,4 +1,4 @@
-# ysp-live v8.1
+# ysp-live v9.0
 
 > **Acknowledgments**
 > 1. Thanks to [IPTV Official Group](http://t.me/iptvorganization) for sharing the algorithm source code
