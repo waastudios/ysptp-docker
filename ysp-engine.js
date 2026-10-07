@@ -3,7 +3,7 @@ const https = require('https');
 const crypto = require('crypto');
 const url = require('url');
 
-const VERSION = '8.1.0';
+const VERSION = '9.0.0';
 const PORT = parseInt(process.env.YSP_ENGINE_PORT || process.env.PORT || process.argv[2] || '8787', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
@@ -15,6 +15,8 @@ const TICKET_B64 = 'AGFzbQEAAAAB8gIwYAN/f38Bf2AEf39/fwF/YAJ/fwF/YAF/AX9gBX9/f39/
 
 const KEYGEN_BUF = Buffer.from(KEYGEN_B64, 'base64');
 const TICKET_BUF = Buffer.from(TICKET_B64, 'base64');
+const KEYGEN_MODULE = new WebAssembly.Module(KEYGEN_BUF);
+const TICKET_MODULE = new WebAssembly.Module(TICKET_BUF);
 
 function runKeygen(state) {
   const values = {
@@ -61,7 +63,7 @@ function runKeygen(state) {
     }
   };
 
-  wasmInstance = new WebAssembly.Instance(new WebAssembly.Module(KEYGEN_BUF), imports);
+  wasmInstance = new WebAssembly.Instance(KEYGEN_MODULE, imports);
 
   function callStringExport(fn) {
     const retPtr = wasmInstance.exports.__wbindgen_add_to_stack_pointer(-16);
@@ -167,7 +169,7 @@ function buildTicket(pid, auth_ts, cnlid, guid) {
     }
   };
 
-  const instance = new WebAssembly.Instance(new WebAssembly.Module(TICKET_BUF), imports);
+  const instance = new WebAssembly.Instance(TICKET_MODULE, imports);
   instance.exports.P();
 
   function alloc(str) {
@@ -222,6 +224,21 @@ function buildCKey(cnlid, ts, guid) {
   return '--01' + enc.toString('hex').toUpperCase();
 }
 
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 64,
+  maxFreeSockets: 16,
+  timeout: 30000,
+  keepAliveMsecs: 30000
+});
+const httpAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: 64,
+  maxFreeSockets: 16,
+  timeout: 30000,
+  keepAliveMsecs: 30000
+});
+
 function httpPost(targetUrl, headers, body) {
   return new Promise((resolve, reject) => {
     const u = new url.URL(targetUrl);
@@ -231,6 +248,7 @@ function httpPost(targetUrl, headers, body) {
       path: u.pathname + u.search,
       method: 'POST',
       headers: { ...headers, 'content-length': Buffer.byteLength(body) },
+      agent: httpsAgent,
       timeout: 10000
     }, res => {
       const chunks = [];
@@ -246,7 +264,7 @@ function httpPost(targetUrl, headers, body) {
 
 function httpGet(targetUrl, headers = {}) {
   return new Promise((resolve, reject) => {
-    const req = https.get(targetUrl, { headers, timeout: 10000 }, res => {
+    const req = https.get(targetUrl, { headers, agent: httpsAgent, timeout: 10000 }, res => {
       const chunks = [];
       res.on('data', d => chunks.push(d));
       res.on('end', () => resolve({ statusCode: res.statusCode, headers: res.headers, data: Buffer.concat(chunks).toString('utf8') }));
@@ -258,8 +276,9 @@ function httpGet(targetUrl, headers = {}) {
 
 function httpGetBuffer(targetUrl, headers = {}) {
   return new Promise((resolve, reject) => {
-    const client = targetUrl.startsWith('https:') ? https : http;
-    const req = client.get(targetUrl, { headers, timeout: 15000 }, res => {
+    const isHttps = targetUrl.startsWith('https:');
+    const client = isHttps ? https : http;
+    const req = client.get(targetUrl, { headers, agent: isHttps ? httpsAgent : httpAgent, timeout: 15000 }, res => {
       const chunks = [];
       res.on('data', d => chunks.push(d));
       res.on('end', () => resolve({ statusCode: res.statusCode, headers: res.headers, buffer: Buffer.concat(chunks) }));
@@ -393,7 +412,7 @@ async function resolveChannelLive(slug) {
     const trimmed = line.trim();
     if (!trimmed) continue;
     if (trimmed.startsWith('#')) {
-      outLines.append = outLines.push(trimmed);
+      outLines.push(trimmed);
     } else {
       let fullSegUrl = trimmed;
       if (!fullSegUrl.startsWith('http://') && !fullSegUrl.startsWith('https://')) {
@@ -490,4 +509,10 @@ process.on('SIGINT', () => {
 });
 process.on('SIGTERM', () => {
   server.close(() => process.exit(0));
+});
+process.on('uncaughtException', err => {
+  console.error('[ysp-engine] uncaughtException:', err && err.message ? err.message : err);
+});
+process.on('unhandledRejection', reason => {
+  console.error('[ysp-engine] unhandledRejection:', reason && reason.message ? reason.message : reason);
 });
