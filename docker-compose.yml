@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ysp-live-v9.0
+    container_name: ysp-live
     restart: unless-stopped
     ports:
       - "8767:8767"
