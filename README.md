@@ -94,6 +94,18 @@ docker compose restart         # restart
 docker compose down            # stop
 ```
 
+## Changelog
+
+### v9.0 (2026-10-07)
+- Upstream: dual-device hot-standby pool (0ms failover), 400 self-healing retry
+- 26 channels via device protocol native high-bitrate by default
+- This build: 30 channels (CCTV/CGTN only), groups 央视FHD/央视UHD/CGTN
+- Built-in EPG aggregation (`/epg.xml`), 4K channels locked to true 4K
+
+### v8.1
+- Dual engine: Python gateway + Node.js WASM fallback, 4-layer failover
+- 30 channels, EPG aggregation
+
 ## Uninstall
 
 ```bash
