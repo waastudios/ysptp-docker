@@ -110,7 +110,7 @@ docker compose down            # 停止
 
 ```bash
 cd /opt/ysp-live-docker && docker compose down -v
-docker rmi ysp-live:v8.1
-cd /opt && rm -rf /opt/ysp-live-docker /opt/v8.1.zip
+docker rmi ysp-live:v9.0
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.0.zip
 ```
 `docker compose down -v` 会连设备注册数据一起删除。
