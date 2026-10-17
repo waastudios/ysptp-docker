@@ -1,4 +1,4 @@
-# ysp-live v9.0
+# ysp-live v9.5
 
 > **Acknowledgments**
 > 1. Thanks to [IPTV Official Group](http://t.me/iptvorganization) for sharing the algorithm source code
@@ -73,8 +73,8 @@ This project ships a built-in aggregated EPG endpoint (see Usage above for the U
 
 - Content: programme guide for only the 30 channels in this project (CCTV FHD / CCTV UHD / CGTN); irrelevant channels are filtered out
 - Upstream sources (merged automatically; the two complement each other, one going down won't break the other):
-  - `https://live.fanmingming.com/e.xml`
-  - `https://epg.112114.xyz/pp.xml.gz`
+  - `https://epg.pw/xmltv/epg_CN.xml.gz`
+  - `https://epg.zsdc.eu.org/t.xml.gz`
 - Refresh: auto-updates every 6 hours; fetched in the background on first access, just retry after a moment
 
 The `/cctv.m3u` playlist already points to this address, so players load the guide automatically.
@@ -96,6 +96,14 @@ docker compose down            # stop
 
 ## Changelog
 
+### v9.5 (2026-10-17)
+- Upstream: state persistence + 400 self-healing persistence fix (device rotation no longer breaks self-healing)
+- Upstream: precise zap debounce; background high-bitrate prefetch auto-cancels after switching away, reducing rate-limit risk
+- Upstream: 1080p cold-start optimization, timeline anti-rewind, HLS spec & redirect compatibility fixes
+- Upstream: cache LRU & WASM fixes, catchup supports millisecond / ISO 8601 timestamps, `/engine_proxy` hardening
+- This build: 30 channels (CCTV/CGTN only), groups 央视FHD/央视UHD/CGTN
+- Built-in EPG aggregation (`/epg.xml`), 4K channels locked to true 4K
+
 ### v9.0 (2026-10-07)
 - Upstream: dual-device hot-standby pool (0ms failover), 400 self-healing retry
 - 26 channels via device protocol native high-bitrate by default
@@ -110,7 +118,7 @@ docker compose down            # stop
 
 ```bash
 cd /opt/ysp-live-docker && docker compose down -v
-docker rmi ysp-live:9.0
-cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.0.zip
+docker rmi ysp-live:9.5
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.5.zip
 ```
 `docker compose down -v` also removes the device registration data.

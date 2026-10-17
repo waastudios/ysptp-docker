@@ -1,4 +1,4 @@
-# ysp-live v9.0
+# ysp-live v9.5
 
 > **致谢**
 > 1. 感谢 [IPTV 总部](http://t.me/iptvorganization)分享的算法源码
@@ -73,8 +73,8 @@ ufw allow 8767/tcp
 
 - 内容：只包含本项目 30 路频道的节目单（央视FHD/央视UHD/CGTN），无用频道已过滤
 - 数据源：自动合并以下两个上游 EPG（两源互补，单个源挂了不影响）：
-  - `https://live.fanmingming.com/e.xml`
-  - `https://epg.112114.xyz/pp.xml.gz`
+  - `https://epg.pw/xmltv/epg_CN.xml.gz`
+  - `https://epg.zsdc.eu.org/t.xml.gz`
 - 刷新：每 6 小时自动更新；首次访问时后台拉取，稍等片刻再刷新即可
 
 `/cctv.m3u` 订阅已默认指向该地址，播放器会自动加载节目单。
@@ -96,6 +96,14 @@ docker compose down            # 停止
 
 ## 更新日志
 
+### v9.5 (2026-10-17)
+- 上游：状态持久化与 400 自愈落盘修复，400 换设备不再中断自愈
+- 上游：换台防抖精准化，切走自动取消高码率预取，减少风控消耗
+- 上游：1080p 冷启动优化与时间线防倒退、HLS 规范与重定向兼容修复
+- 上游：缓存 LRU 与 WASM 修复、回看支持毫秒级/ISO 8601 时间戳、`/engine_proxy` 安全加固
+- 本定制版：30 路（仅 CCTV/CGTN），分组 央视FHD/央视UHD/CGTN
+- 内置 EPG 聚合（`/epg.xml`），4K 频道锁死真 4K
+
 ### v9.0 (2026-10-07)
 - 上游：双设备热备池（0ms 切换）、400 智能自愈重试
 - 默认 26 路走设备协议原生高码流
@@ -110,7 +118,7 @@ docker compose down            # 停止
 
 ```bash
 cd /opt/ysp-live-docker && docker compose down -v
-docker rmi ysp-live:9.0
-cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.0.zip
+docker rmi ysp-live:9.5
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.5.zip
 ```
 `docker compose down -v` 会连设备注册数据一起删除。

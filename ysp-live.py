@@ -32,13 +32,20 @@ import urllib .parse
 import urllib .request 
 import uuid 
 from collections import deque 
+urllib .request .install_opener (urllib .request .build_opener (urllib .request .ProxyHandler ({}))) 
 try:
     from epg_agg import EpgAggregator
     _HAS_EPG = True
 except ImportError:
     _HAS_EPG = False
     EpgAggregator = None
-__version__ ='9.0.0'
+__version__ ='9.5.0'
+AUTHOR_COMMUNITY ='https://t.me/garysclub'
+AUTHOR_CHANNEL ='https://t.me/garysclubchannel'
+AUTHOR_NOTICE =f'''📢 首发地址
+社区：Gary's Club ({AUTHOR_COMMUNITY})
+频道：Gary's Club Channel ({AUTHOR_CHANNEL})
+⚠️ 其他任何分发渠道均非作者本人！'''
 AK ='9f5c54c4ed0e50109b800f7e28fec205'
 RSA_PUBLIC_KEY_B64 ='MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkKeLy4ywWLSnBkwRyqYgF3HMIj05V5uuh5HjyEsZOWnu1NHu3jPQv3sr32wwQNYv5qapsNXmNgLUDHtgHZxqPQAYXltjSRc0qhcD286t62wOIHId8zXS3s1Jy4rgU4qjQWzI9rp/1sE0pMsmwTaJa4zuJ5iz8VwF8Av5oJ1k+HxY+/HLnjNlW1hmWLpuDYmkZYuAoTHa1VGeHQh9FEKI8ZcL3GTQphShUoC+Kg3P1hGUVTtCYapmzPS5lkAdwebuzwvTCfGiTErYZCnPBUSeV7BVlgjtLYIi29KvF0a8FHsJMfe/UdHcyW/RihsIYOtDQcRRpFGXyPXbVrzFJse24QIDAQAB'
 CLOUD_GET_URL ='https://ytpcloudws.cctv.cn/cloudps/wssapi/device/v2/get'
@@ -66,10 +73,6 @@ RESULT_GET_MISSING_OR_INVALID =2
 RESULT_REGISTERED_ELSEWHERE =694 
 RESULT_REGISTER_RETRY_LATER =695 
 _SBOX =(99 ,124 ,119 ,123 ,242 ,107 ,111 ,197 ,48 ,1 ,103 ,43 ,254 ,215 ,171 ,118 ,202 ,130 ,201 ,125 ,250 ,89 ,71 ,240 ,173 ,212 ,162 ,175 ,156 ,164 ,114 ,192 ,183 ,253 ,147 ,38 ,54 ,63 ,247 ,204 ,52 ,165 ,229 ,241 ,113 ,216 ,49 ,21 ,4 ,199 ,35 ,195 ,24 ,150 ,5 ,154 ,7 ,18 ,128 ,226 ,235 ,39 ,178 ,117 ,9 ,131 ,44 ,26 ,27 ,110 ,90 ,160 ,82 ,59 ,214 ,179 ,41 ,227 ,47 ,132 ,83 ,209 ,0 ,237 ,32 ,252 ,177 ,91 ,106 ,203 ,190 ,57 ,74 ,76 ,88 ,207 ,208 ,239 ,170 ,251 ,67 ,77 ,51 ,133 ,69 ,249 ,2 ,127 ,80 ,60 ,159 ,168 ,81 ,163 ,64 ,143 ,146 ,157 ,56 ,245 ,188 ,182 ,218 ,33 ,16 ,255 ,243 ,210 ,205 ,12 ,19 ,236 ,95 ,151 ,68 ,23 ,196 ,167 ,126 ,61 ,100 ,93 ,25 ,115 ,96 ,129 ,79 ,220 ,34 ,42 ,144 ,136 ,70 ,238 ,184 ,20 ,222 ,94 ,11 ,219 ,224 ,50 ,58 ,10 ,73 ,6 ,36 ,92 ,194 ,211 ,172 ,98 ,145 ,149 ,228 ,121 ,231 ,200 ,55 ,109 ,141 ,213 ,78 ,169 ,108 ,86 ,244 ,234 ,101 ,122 ,174 ,8 ,186 ,120 ,37 ,46 ,28 ,166 ,180 ,198 ,232 ,221 ,116 ,31 ,75 ,189 ,139 ,138 ,112 ,62 ,181 ,102 ,72 ,3 ,246 ,14 ,97 ,53 ,87 ,185 ,134 ,193 ,29 ,158 ,225 ,248 ,152 ,17 ,105 ,217 ,142 ,148 ,155 ,30 ,135 ,233 ,206 ,85 ,40 ,223 ,140 ,161 ,137 ,13 ,191 ,230 ,66 ,104 ,65 ,153 ,45 ,15 ,176 ,84 ,187 ,22 )
-_INV_SBOX =[0 ]*256 
-for _i ,_v in enumerate (_SBOX ):
-    _INV_SBOX [_v ]=_i 
-_INV_SBOX =tuple (_INV_SBOX )
 _RCON =(1 ,2 ,4 ,8 ,16 ,32 ,64 ,128 ,27 ,54 )
 def _xtime (a :int )->int :
     return (a <<1 ^283 )&255 if a &128 else a <<1 &255 
@@ -91,17 +94,10 @@ def _add_round_key (state ,rk :bytes ):
 def _sub_bytes (state ):
     for i in range (16 ):
         state [i ]=_SBOX [state [i ]]
-def _inv_sub_bytes (state ):
-    for i in range (16 ):
-        state [i ]=_INV_SBOX [state [i ]]
 def _shift_rows (s ):
     s [1 ],s [5 ],s [9 ],s [13 ]=(s [5 ],s [9 ],s [13 ],s [1 ])
     s [2 ],s [6 ],s [10 ],s [14 ]=(s [10 ],s [14 ],s [2 ],s [6 ])
     s [3 ],s [7 ],s [11 ],s [15 ]=(s [15 ],s [3 ],s [7 ],s [11 ])
-def _inv_shift_rows (s ):
-    s [1 ],s [5 ],s [9 ],s [13 ]=(s [13 ],s [1 ],s [5 ],s [9 ])
-    s [2 ],s [6 ],s [10 ],s [14 ]=(s [10 ],s [14 ],s [2 ],s [6 ])
-    s [3 ],s [7 ],s [11 ],s [15 ]=(s [7 ],s [11 ],s [15 ],s [3 ])
 def _mix_columns (s ):
     for c in range (4 ):
         a0 ,a1 ,a2 ,a3 =(s [4 *c ],s [4 *c +1 ],s [4 *c +2 ],s [4 *c +3 ])
@@ -109,26 +105,7 @@ def _mix_columns (s ):
         s [4 *c +1 ]=a0 ^_xtime (a1 )^(_xtime (a2 )^a2 )^a3 
         s [4 *c +2 ]=a0 ^a1 ^_xtime (a2 )^(_xtime (a3 )^a3 )
         s [4 *c +3 ]=_xtime (a0 )^a0 ^a1 ^a2 ^_xtime (a3 )
-def _mul (a :int ,b :int )->int :
-    p =0 
-    for _ in range (8 ):
-        if b &1 :
-            p ^=a 
-        hi =a &128 
-        a =a <<1 &255 
-        if hi :
-            a ^=27 
-        b >>=1 
-    return p 
-def _inv_mix_columns (s ):
-    for c in range (4 ):
-        a0 ,a1 ,a2 ,a3 =(s [4 *c ],s [4 *c +1 ],s [4 *c +2 ],s [4 *c +3 ])
-        s [4 *c ]=_mul (a0 ,14 )^_mul (a1 ,11 )^_mul (a2 ,13 )^_mul (a3 ,9 )
-        s [4 *c +1 ]=_mul (a0 ,9 )^_mul (a1 ,14 )^_mul (a2 ,11 )^_mul (a3 ,13 )
-        s [4 *c +2 ]=_mul (a0 ,13 )^_mul (a1 ,9 )^_mul (a2 ,14 )^_mul (a3 ,11 )
-        s [4 *c +3 ]=_mul (a0 ,11 )^_mul (a1 ,13 )^_mul (a2 ,9 )^_mul (a3 ,14 )
-def aes256_encrypt_block (key :bytes ,block :bytes )->bytes :
-    rk =_aes256_key_schedule (key )
+def _aes256_encrypt_block_rk (rk :list ,block :bytes )->bytes :
     s =bytearray (block )
     _add_round_key (s ,rk [0 ])
     for rnd in range (1 ,14 ):
@@ -140,19 +117,8 @@ def aes256_encrypt_block (key :bytes ,block :bytes )->bytes :
     _shift_rows (s )
     _add_round_key (s ,rk [14 ])
     return bytes (s )
-def aes256_decrypt_block (key :bytes ,block :bytes )->bytes :
-    rk =_aes256_key_schedule (key )
-    s =bytearray (block )
-    _add_round_key (s ,rk [14 ])
-    for rnd in range (13 ,0 ,-1 ):
-        _inv_shift_rows (s )
-        _inv_sub_bytes (s )
-        _add_round_key (s ,rk [rnd ])
-        _inv_mix_columns (s )
-    _inv_shift_rows (s )
-    _inv_sub_bytes (s )
-    _add_round_key (s ,rk [0 ])
-    return bytes (s )
+def aes256_encrypt_block (key :bytes ,block :bytes )->bytes :
+    return _aes256_encrypt_block_rk (_aes256_key_schedule (key ),block )
 def _gf_mult (x :int ,y :int )->int :
     r =299076299051606071403356588563077529600 
     z =0 
@@ -184,34 +150,38 @@ def _ghash (h :int ,aad :bytes ,ct :bytes )->int :
 def _inc32 (block :bytes )->bytes :
     ctr =int .from_bytes (block [12 :],'big')
     return block [:12 ]+(ctr +1 &4294967295 ).to_bytes (4 ,'big')
-def _gctr (key :bytes ,icb :bytes ,data :bytes )->bytes :
+def _gctr_rk (rk :list ,icb :bytes ,data :bytes )->bytes :
     out =bytearray ()
     cb =icb 
     for i in range (0 ,len (data ),16 ):
-        ks =aes256_encrypt_block (key ,cb )
+        ks =_aes256_encrypt_block_rk (rk ,cb )
         chunk =data [i :i +16 ]
         out +=bytes ((a ^b for a ,b in zip (chunk ,ks )))
         cb =_inc32 (cb )
     return bytes (out )
+def _gctr (key :bytes ,icb :bytes ,data :bytes )->bytes :
+    return _gctr_rk (_aes256_key_schedule (key ),icb ,data )
 def aes_gcm_encrypt (key :bytes ,nonce :bytes ,plaintext :bytes ,aad :bytes =b'')->bytes :
     assert len (key )==32 and len (nonce )==12 
-    h =int .from_bytes (aes256_encrypt_block (key ,b'\x00'*16 ),'big')
+    rk =_aes256_key_schedule (key )
+    h =int .from_bytes (_aes256_encrypt_block_rk (rk ,b'\x00'*16 ),'big')
     j0 =nonce +b'\x00\x00\x00\x01'
-    ct =_gctr (key ,_inc32 (j0 ),plaintext )
+    ct =_gctr_rk (rk ,_inc32 (j0 ),plaintext )
     s =_ghash (h ,aad ,ct ).to_bytes (16 ,'big')
-    tag =bytes ((a ^b for a ,b in zip (aes256_encrypt_block (key ,j0 ),s )))
+    tag =bytes ((a ^b for a ,b in zip (_aes256_encrypt_block_rk (rk ,j0 ),s )))
     return ct +tag 
 def aes_gcm_decrypt (key :bytes ,nonce :bytes ,ct_and_tag :bytes ,aad :bytes =b'')->bytes :
     if len (ct_and_tag )<16 :
         raise ValueError ('AES-GCM payload too short')
     ct ,tag =(ct_and_tag [:-16 ],ct_and_tag [-16 :])
-    h =int .from_bytes (aes256_encrypt_block (key ,b'\x00'*16 ),'big')
+    rk =_aes256_key_schedule (key )
+    h =int .from_bytes (_aes256_encrypt_block_rk (rk ,b'\x00'*16 ),'big')
     j0 =nonce +b'\x00\x00\x00\x01'
     s =_ghash (h ,aad ,ct ).to_bytes (16 ,'big')
-    expect =bytes ((a ^b for a ,b in zip (aes256_encrypt_block (key ,j0 ),s )))
+    expect =bytes ((a ^b for a ,b in zip (_aes256_encrypt_block_rk (rk ,j0 ),s )))
     if not _hmac .compare_digest (tag ,expect ):
         raise ValueError ('AES-GCM decrypt failed')
-    return _gctr (key ,_inc32 (j0 ),ct )
+    return _gctr_rk (rk ,_inc32 (j0 ),ct )
 def _mgf1_sha256 (seed :bytes ,length :int )->bytes :
     out =bytearray ()
     counter =0 
@@ -282,12 +252,25 @@ def sha256_hex (value :str )->str :
     return hashlib .sha256 (value .encode ('utf-8')).hexdigest ()
 def md5_hex (value :str )->str :
     return hashlib .md5 (value .encode ('utf-8')).hexdigest ()
-def log_program_initializing ()->None :
-    print ('程序初始化中',file =sys .stderr )
-def log_program_fetching ()->None :
-    print ('程序获取直播源中',file =sys .stderr )
-def log_channel_ready (channel :str )->None :
-    print (f'程序已成功获取{channel }的直播源',file =sys .stderr )
+global_log_ring =collections .deque (maxlen =120 )
+_log_lock =threading .Lock ()
+_last_log_times ={}
+def log (msg ,min_interval =0.0 ):
+    now =time .time ()
+    clean_msg =str (msg ).strip ()
+    if not clean_msg :
+        return 
+    with _log_lock :
+        interval =min_interval if min_interval >0.0 else 1.5 
+        last_t =_last_log_times .get (clean_msg ,0.0 )
+        if now -last_t <interval :
+            return 
+        _last_log_times [clean_msg ]=now 
+        if len (_last_log_times )>600 :
+            _last_log_times .clear ()
+        line ='[%s] %s'%(time .strftime ('%H:%M:%S'),clean_msg )
+        global_log_ring .append (line )
+    print (line ,flush =True )
 def java_string_hashcode (value :str )->int :
     h =0 
     for ch in value :
@@ -351,6 +334,7 @@ def normalize_channel (raw :str )->str :
     if key in ('cctv16-4k','cctv16_4k','cctv16/4k','cctv16(4k)'):
         return 'cctv164k'
     return key 
+TRUE_4K_CHANNELS ={'cctv4k','cctv8k','cctv164k'}
 @dataclasses .dataclass 
 class DeviceProfile :
     android_id :str =''
@@ -778,7 +762,7 @@ class HttpClient :
             self ._ctx =ssl .create_default_context ()
         jar =http .cookiejar .CookieJar ()
         https_handler =urllib .request .HTTPSHandler (context =self ._ctx )
-        self ._opener =urllib .request .build_opener (urllib .request .HTTPCookieProcessor (jar ),https_handler )
+        self ._opener =urllib .request .build_opener (urllib .request .ProxyHandler ({}),urllib .request .HTTPCookieProcessor (jar ),https_handler )
         self ._jar =jar 
     def _send (self ,method :str ,url :str ,headers :dict ,data :bytes |None )->HttpResponse :
         req =urllib .request .Request (url ,data =data ,method =method )
@@ -837,19 +821,39 @@ class ResolverState :
         self .channel_failures :dict [str ,tuple [float ,str ,int ]]={}
         self .generation =0 
         self .session_generation =0 
-        self .app_session =None 
-        self .standby_session =None 
-        self .last_standby_ready_at =0.0 
+        self .sessions :dict [int ,AppSession ]={}
+        self .channel_slot_map :dict [str ,int ]={}
+        self .slot_last_reset :dict [int ,float ]={}
         self .last_control_request_at =0.0 
         self .last_business_end_at =0.0 
         self .refreshing_channel =''
         self .last_error =''
         self .last_error_at =0.0 
         self .identity_reset_error_count =0 
+        self .channel_last_access :dict [str ,float ]={}
         self .identity_reset_count =0 
         self .last_identity_reset_at =0.0 
         self .last_identity_reset_reason =''
         self .ad_display =False 
+        self .zap_channel =''
+        self .zap_time =0.0 
+        self .zap_pending =''
+        self .zap_generation =0 
+        self .zap_times :dict [str ,float ]={}
+        self .zap_pending_channels :set [str ]=set ()
+        self .zap_generations :dict [str ,int ]={}
+        self .last_device_wipe_at =0.0 
+        self .device_wipe_day =''
+        self .device_wipe_count =0 
+    @property 
+    def app_session (self ):
+        return self .sessions .get (0 )or (list (self .sessions .values ())[0 ]if self .sessions else None )
+    @app_session .setter 
+    def app_session (self ,val ):
+        if val is not None :
+            self .sessions [0 ]=val 
+        else :
+            self .sessions .pop (0 ,None )
 @dataclasses .dataclass 
 class AppSession :
     profile :DeviceProfile 
@@ -901,12 +905,10 @@ class Resolver :
         self .state =ResolverState ()
         self .state_lock =threading .Lock ()
         self .control_lock =threading .RLock ()
-        self .standby_lock =threading .Lock ()
-        self .standby_in_progress =False 
-        self .last_standby_attempt_at =0.0 
         self .playlist_locks_lock =threading .Lock ()
         self .playlist_locks :dict [str ,threading .Lock ]={}
         self .refresh_queue =RefreshQueue ()
+        self .http_queue =HttpQueue ()
         self .state .cache =load_cache (args .meta_json )
     def start_heartbeat (self ):
         def loop ():
@@ -920,28 +922,6 @@ class Resolver :
         t .start ()
     def start_refresh_worker (self ):
         t =threading .Thread (target =self .refresh_worker_loop ,daemon =True ,name ='refresh-worker')
-        t .start ()
-    def start_keep_warm_worker (self ):
-        def loop ():
-            while True :
-                time .sleep (15.0 )
-                if not resolver_ready ():
-                    continue 
-                now =now_f64 ()
-                for slug in ('cctv4k','cctv164k','cctv8k'):
-                    ch =CHANNEL_MAP .get (slug )
-                    if ch is None or (ch .last_access >0 and now -ch .last_access >IDLE_TIMEOUT ):
-                        continue 
-                    with self .state_lock :
-                        entry =self .state .cache .get (slug )
-                        needs_refresh =(
-                        entry is None 
-                        or (entry .expires_at -now <25.0 )
-                        or entry_missing_signed_playback_headers (entry )
-                        )
-                    if needs_refresh and not self .is_channel_in_cooldown (slug ):
-                        self .enqueue_background_refresh (slug )
-        t =threading .Thread (target =loop ,daemon =True ,name ='keep-warm-worker')
         t .start ()
     def enqueue_background_refresh (self ,channel :str ):
         now =now_f64 ()
@@ -1016,81 +996,139 @@ class Resolver :
         if float (self .args .session_ttl )<=0.0 :
             return None 
         return float (self .args .session_ttl )-(now_f64 ()-sess .created_at )
-    def replenish_standby_worker (self ):
-        with self .standby_lock :
-            if self .standby_in_progress :
+    def slot_device_json_path (self ,slot :int )->str :
+        base =self .args .device_json 
+        if slot ==0 :
+            return base 
+        root ,ext =os .path .splitext (base )
+        return f'{root }-slot{slot }{ext }'
+    def evict_idle_links (self ,app_session ,idle_sec =15.0 ):
+        now =now_f64 ()
+        with self .state_lock :
+            last =dict (self .state .channel_last_access )
+        for ch_slug in list (app_session .linked_channels ):
+            if now -last .get (ch_slug ,0.0 )>idle_sec :
+                app_session .linked_channels .discard (ch_slug )
+    def zap_debounced (self ,channel :str )->bool :
+        if channel in TRUE_4K_CHANNELS :
+            return False 
+        try :
+            debounce =float (getattr (self .args ,'zap_debounce',10.0 ))
+        except (TypeError ,ValueError ):
+            debounce =10.0 
+        if debounce <=0.0 :
+            return False 
+        now =now_f64 ()
+        with self .state_lock :
+            entry =self .state .cache .get (channel )
+            if entry is not None and entry .fresh (now )and not entry_missing_signed_playback_headers (entry ):
+                return False 
+            sess =self .state .sessions .get (0 )
+            if sess is not None and channel in sess .linked_channels and entry is not None and (now -entry .expires_at <30.0 ):
+                return False 
+            self .state .zap_channel =channel 
+            if channel in self .state .zap_pending_channels :
+                return True 
+            ch_zap_time =self .state .zap_times .get (channel ,0.0 )
+            if ch_zap_time <=0.0 or (now -ch_zap_time >max (debounce *3.0 ,30.0 )):
+                ch_zap_time =now 
+                self .state .zap_times [channel ]=now 
+                self .state .zap_time =now 
+            if now -ch_zap_time <debounce :
+                self .state .zap_pending =channel 
+                self .state .zap_pending_channels .add (channel )
+                self .state .zap_generation +=1 
+                gen =self .state .zap_generations .get (channel ,0 )+1 
+                self .state .zap_generations [channel ]=gen 
+                delay =max (0.1 ,debounce -(now -ch_zap_time ))
+                threading .Thread (target =self ._zap_resolve_worker ,args =(channel ,gen ,delay ),daemon =True ).start ()
+                return True 
+            return False 
+    def _zap_resolve_worker (self ,channel :str ,gen :int ,delay :float ):
+        time .sleep (delay )
+        now =now_f64 ()
+        with self .state_lock :
+            if gen !=self .state .zap_generations .get (channel ,0 ):
+                self .state .zap_pending_channels .discard (channel )
                 return 
-            now =now_f64 ()
-            if now -self .last_standby_attempt_at <15.0 :
+            last_acc =self .state .channel_last_access .get (channel ,0.0 )
+            if (now -last_acc >max (delay +2.0 ,12.0 ))or (self .state .zap_channel !=channel and now -last_acc >5.0 ):
+                self .state .zap_pending_channels .discard (channel )
+                self .state .zap_times .pop (channel ,None )
+                if self .state .zap_pending ==channel :
+                    self .state .zap_pending =''
                 return 
+        try :
+            self .ensure_channel (channel ,force =True )
+            log (f'[{channel }] 高码率后台预取完成, 继续停留将自动升级',min_interval =10.0 )
+        except Exception as e :
+            log (f'[{channel }] 高码率后台预取失败: {e }, 继续 1080p',min_interval =10.0 )
+        finally :
             with self .state_lock :
-                if self .state .standby_session is not None :
-                    return 
-            self .standby_in_progress =True 
-            self .last_standby_attempt_at =now 
-        def _task ():
-            try :
-                new_state =default_device_state ()
-                with self .state_lock :
-                    self .state .session_generation +=1 
-                    gen =self .state .session_generation 
-                standby_sess =self .bootstrap_session (gen ,device_state =new_state ,save_to_disk =False ,fast =True )
-                with self .state_lock :
-                    self .state .standby_session =standby_sess 
-                    self .state .last_standby_ready_at =now_f64 ()
-                log ('热备设备已在后台就绪 (Standby Slot Ready)')
-            except Exception as e :
-                log (f'热备设备后台注册暂缓: {e }')
-            finally :
-                with self .standby_lock :
-                    self .standby_in_progress =False 
-        threading .Thread (target =_task ,daemon =True ,name ='standby-replenish').start ()
-    def promote_standby_to_active (self ,reason :str ,clear_cache :bool =False )->AppSession :
+                self .state .zap_pending_channels .discard (channel )
+                if self .state .zap_pending ==channel :
+                    self .state .zap_pending =''
+    def rotate_device_on_400 (self ,reason :str )->bool :
+        now =now_f64 ()
         with self .state_lock :
-            if clear_cache :
-                self .state .cache .clear ()
-                self .state .playlist_cache .clear ()
-            new_sess =self .state .standby_session 
-            if new_sess is not None :
-                self .state .standby_session =None 
-                self .state .app_session =new_sess 
-                self .state .identity_reset_count +=1 
-                self .state .last_identity_reset_at =now_f64 ()
-                self .state .last_identity_reset_reason =reason 
-                try :
-                    save_device_state (self .args .device_json ,DeviceState (schema_version =1 ,profile_source =new_sess .profile .report_model ,profile =new_sess .profile ,screen_param =new_sess .screen_param ,cast_model =new_sess .cast_model ,x_uid =new_sess .identity .x_uid ,cloud_guid =new_sess .cloud_guid ,registered_at =now_f64 (),updated_at =now_f64 ()))
-                except OSError :
-                    pass 
-                log (f'已无缝切换至热备设备 ({reason })，耗时 0ms')
-                threading .Thread (target =self .replenish_standby_worker ,daemon =True ).start ()
-                with self .refresh_queue .cond :
-                    self .refresh_queue .cond .notify_all ()
-                return new_sess 
-        log (f'热备设备暂未就绪，触发极速通道生成新设备 ({reason })…')
-        new_state =create_and_save_new_device (self .args .device_json )
+            if now -self .state .last_device_wipe_at <300.0 :
+                return False 
+            day =time .strftime ('%Y-%m-%d',time .localtime (now ))
+            if self .state .device_wipe_day !=day :
+                self .state .device_wipe_day =day 
+                self .state .device_wipe_count =0 
+            if self .state .device_wipe_count >=5 :
+                log ('[设备] 24小时内已自动换新身份 5 次，停止自动更换，请手动检查网络或设备',min_interval =60.0 )
+                return False 
+            self .state .last_device_wipe_at =now 
+            self .state .device_wipe_day =day 
+            self .state .device_wipe_count +=1 
+            wipe_no =self .state .device_wipe_count 
+            target =self .slot_device_json_path (0 )
+            self .state .sessions .pop (0 ,None )
+            self .state .cache .clear ()
+            self .state .playlist_cache .clear ()
+            self .state .channel_failures .clear ()
+            self .state .channel_last_access .clear ()
+        create_and_save_new_device (target )
+        log (f'[设备] 检测到 400 ({reason })，旧身份已废弃，换新设备身份 (5分钟内仅一次，今日第 {wipe_no } 次)')
+        return True 
+    def get_slot_for_channel (self ,channel :str )->int :
+        return 0 
+    def ensure_slot_session (self ,slot :int )->AppSession :
         with self .state_lock :
-            if clear_cache :
-                self .state .cache .clear ()
-                self .state .playlist_cache .clear ()
-            self .state .session_generation +=1 
-            gen =self .state .session_generation 
-        new_sess =self .bootstrap_session (gen ,device_state =new_state ,save_to_disk =True ,fast =True )
-        with self .state_lock :
-            self .state .app_session =new_sess 
-            self .state .identity_reset_count +=1 
-            self .state .last_identity_reset_at =now_f64 ()
-            self .state .last_identity_reset_reason =reason 
-        threading .Thread (target =self .replenish_standby_worker ,daemon =True ).start ()
-        with self .refresh_queue .cond :
-            self .refresh_queue .cond .notify_all ()
-        return new_sess 
-    def rotate_device (self ,reason :str ,clear_cache :bool =False ):
-        return self .promote_standby_to_active (reason ,clear_cache =clear_cache )
+            sess =self .state .sessions .get (slot )
+            if sess is not None and self .app_session_fresh (sess ):
+                rem =self .app_session_ttl_remaining (sess )
+                if rem is None or rem >300.0 :
+                    return sess 
+        self .control_lock .acquire ()
+        try :
+            with self .state_lock :
+                sess =self .state .sessions .get (slot )
+                if sess is not None and self .app_session_fresh (sess ):
+                    rem =self .app_session_ttl_remaining (sess )
+                    if rem is None or rem >300.0 :
+                        return sess 
+            with self .state_lock :
+                self .state .session_generation +=1 
+                gen =self .state .session_generation 
+            target_json =self .slot_device_json_path (slot )
+        finally :
+            self .control_lock .release ()
+        sess =self .bootstrap_session (gen ,save_to_disk =True ,fast =True ,device_json =target_json )
+        self .control_lock .acquire ()
+        try :
+            with self .state_lock :
+                cur =self .state .sessions .get (slot )
+                if cur is None or not self .app_session_fresh (cur )or cur .generation <gen :
+                    self .state .sessions [slot ]=sess 
+                else :
+                    sess =cur 
+        finally :
+            self .control_lock .release ()
+        return sess 
     def record_recoverable_error (self ,reason :str )->bool :
-        if is_session_invalidating_error (reason ):
-            log (f'检测到设备风控限制 ({reason }), 自动轮换全新设备…')
-            self .rotate_device (reason ,clear_cache =True )
-            return True 
         if not is_identity_recoverable_error (reason ):
             return False 
         threshold =int (self .args .identity_reset_error_threshold )
@@ -1101,9 +1139,6 @@ class Resolver :
                 return False 
             self .state .identity_reset_error_count =min (self .state .identity_reset_error_count +1 ,2 **31 -1 )
             should_reset =self .state .identity_reset_error_count >=threshold 
-        if should_reset :
-            self .rotate_device (reason ,clear_cache =True )
-            return True 
         try :
             self .write_meta ()
         except Exception :
@@ -1112,22 +1147,6 @@ class Resolver :
     def clear_recoverable_error_count (self ):
         with self .state_lock :
             self .state .identity_reset_error_count =0 
-    def reset_identity_and_cache (self ,reason :str ):
-        with self .state_lock :
-            self .state .cache .clear ()
-            self .state .playlist_cache .clear ()
-            self .state .background_refreshing .clear ()
-            self .state .channel_failures .clear ()
-            self .state .app_session =None 
-            self .state .refreshing_channel =''
-            self .state .identity_reset_error_count =0 
-            self .state .identity_reset_count +=1 
-            self .state .last_identity_reset_at =now_f64 ()
-            self .state .last_identity_reset_reason =reason 
-            self .state .last_error =f'cache reset after recoverable errors: {reason }'
-            self .state .last_error_at =now_f64 ()
-        with self .refresh_queue .cond :
-            self .refresh_queue .cond .notify_all ()
     def is_channel_in_cooldown (self ,channel :str )->bool :
         with self .state_lock :
             fail =self .state .channel_failures .get (channel )
@@ -1193,6 +1212,18 @@ class Resolver :
                 entry =self .refresh_channel_controlled (channel )
             except YsptpError as err :
                 err_text =str (err )
+                if 'HTTP 400'in err_text and self .rotate_device_on_400 (channel +':'+err_text [:60 ]):
+                    try :
+                        entry =self .refresh_channel_controlled (channel )
+                    except Exception :
+                        pass 
+                    else :
+                        self .clear_recoverable_error_count ()
+                        try :
+                            self .write_meta ()
+                        except Exception :
+                            pass 
+                        return entry 
                 with self .state_lock :
                     self .state .last_error =err_text 
                     self .state .last_error_at =now_f64 ()
@@ -1277,33 +1308,20 @@ class Resolver :
             self .state .refreshing_channel =channel 
             self .state .generation +=1 
             generation =self .state .generation 
-        log_program_fetching ()
+        log (f'[{channel }] 正在向央视频协议引擎请求直播源…',min_interval =10.0 )
         try :
+            slot =self .get_slot_for_channel (channel )
             limit =int (getattr (self .args ,'links_per_device',6 ))
-            app_session =self .get_app_session_controlled ()
+            app_session =self .ensure_slot_session (slot )
             if limit >0 and channel not in app_session .linked_channels and len (app_session .linked_channels )>=limit :
-                log (f'当前设备已获取 {len (app_session .linked_channels )} 个高码率链接，达到安全配额 ({limit })，平滑切换热备设备…')
-                app_session =self .promote_standby_to_active ('safe quota reached',clear_cache =False )
+                self .evict_idle_links (app_session ,LINK_IDLE_TIMEOUT )
+                if len (app_session .linked_channels )>=limit :
+                    raise YsptpError (f'device link quota reached ({limit }), fallback to 1080p')
             live_id =channel_by_name (channel )
             if live_id is None :
                 raise YsptpError (f'unknown channel {channel }')
-            try :
-                entry =self .resolve_channel_once (app_session ,channel ,live_id ,generation )
-                app_session .linked_channels .add (channel )
-            except YsptpError as err :
-                err_text =str (err )
-                if is_session_invalidating_error (err_text ):
-                    log (f'检测到设备风控限制 ({err_text })，立即启用热备设备现场重试 {channel }…')
-                    new_app_session =self .promote_standby_to_active (err_text ,clear_cache =False )
-                    try :
-                        entry =self .resolve_channel_once (new_app_session ,channel ,live_id ,generation )
-                        new_app_session .linked_channels .add (channel )
-                        log (f'热备设备现场重试成功: {channel } 顺利获得高码率链接，免于降级')
-                    except Exception as retry_err :
-                        log (f'热备设备重试未能恢复: {retry_err }，走下级兜底')
-                        raise 
-                else :
-                    raise 
+            entry =self .resolve_channel_once (app_session ,channel ,live_id ,generation )
+            app_session .linked_channels .add (channel )
         except YsptpError as err :
             with self .state_lock :
                 self .state .last_business_end_at =now_f64 ()
@@ -1317,53 +1335,29 @@ class Resolver :
             self .state .channel_failures .pop (channel ,None )
             self .state .identity_reset_error_count =0 
             self .state .last_error =''
-            log_channel_ready (channel )
+            if channel in ('cctv4k','cctv164k','cctv8k'):
+                rate_label ='4K超高清 (36M超高码率)'if entry .rate =='36p'else ('4K (10M码率)'if entry .rate =='10p'else '4K超高清')
+            elif entry .rate =='10p':
+                rate_label ='高码率 (10M码率)'
+            elif entry .rate =='36p':
+                rate_label ='超高码率 (36M码率)'
+            else :
+                rate_label =entry .rate_name or entry .rate or '高码率'
+            if channel in ('cctv4k','cctv164k','cctv8k')and '8K'in rate_label :
+                rate_label ='4K超高清 (36M超高码率)'
+            log (f'[{channel }] 直播源获取成功 (清晰度: {rate_label })',min_interval =10.0 )
         return entry 
-    def ensure_fresh_session (self )->AppSession :
-        with self .state_lock :
-            sess =self .state .app_session 
-            if sess is not None and self .app_session_fresh (sess ):
-                rem =self .app_session_ttl_remaining (sess )
-                if rem is None or rem >300.0 :
-                    return sess 
-        with self .control_lock :
-            with self .state_lock :
-                sess =self .state .app_session 
-                if sess is not None and self .app_session_fresh (sess ):
-                    rem =self .app_session_ttl_remaining (sess )
-                    if rem is None or rem >300.0 :
-                        return sess 
-            with self .state_lock :
-                if self .state .standby_session is not None :
-                    new_sess =self .state .standby_session 
-                    self .state .standby_session =None 
-                    self .state .app_session =new_sess 
-                    self .state .identity_reset_count +=1 
-                    self .state .last_identity_reset_at =now_f64 ()
-                    self .state .last_identity_reset_reason ='active session expired'
-                    log ('主会话已平滑轮换为热备会话')
-                    threading .Thread (target =self .replenish_standby_worker ,daemon =True ).start ()
-                    return new_sess 
-            with self .state_lock :
-                self .state .session_generation +=1 
-                gen =self .state .session_generation 
-            sess =self .bootstrap_session (gen ,save_to_disk =True ,fast =True )
-            with self .state_lock :
-                self .state .app_session =sess 
-            threading .Thread (target =self .replenish_standby_worker ,daemon =True ).start ()
-            return sess 
-    def get_app_session_controlled (self )->AppSession :
-        return self .ensure_fresh_session ()
     def new_ytpaddr_client (self )->HttpClient :
         return HttpClient (float (self .args .timeout ),bool (self .args .insecure_tls ))
-    def bootstrap_session (self ,generation :int ,device_state :DeviceState |None =None ,save_to_disk :bool =True ,fast :bool =False )->AppSession :
+    def bootstrap_session (self ,generation :int ,device_state :DeviceState |None =None ,save_to_disk :bool =True ,fast :bool =False ,device_json :str ='' )->AppSession :
+        target_json =device_json or self .args .device_json 
         if device_state is None :
-            device_state ,existed =load_device_state (self .args .device_json )
+            device_state ,existed =load_device_state (target_json )
             if (not existed or device_state .registered_at <=0.0 )and save_to_disk :
                 device_state =default_device_state ()
                 device_state .updated_at =now_f64 ()
                 try :
-                    save_device_state (self .args .device_json ,device_state )
+                    save_device_state (target_json ,device_state )
                 except OSError :
                     pass 
         profile =device_state .profile 
@@ -1376,10 +1370,12 @@ class Resolver :
         session_key =app_start .session_key 
         try :
             cloud_guid =self .cloud_registration_flow (identity ,identity .x_uid )
-        except YsptpError :
-            cloud_guid =''
+        except YsptpError as reg_err :
+            raise YsptpError (f'cloud device registration failed: {reg_err }')
         if not cloud_guid and device_state .cloud_guid :
             cloud_guid =device_state .cloud_guid 
+        if not cloud_guid :
+            raise YsptpError ('cloud device registration failed: empty guid, fallback to 1080p')
         now =now_f64 ()
         device_state .x_uid =identity .x_uid 
         device_state .updated_at =now 
@@ -1389,7 +1385,7 @@ class Resolver :
                 device_state .registered_at =now 
         if save_to_disk :
             try :
-                save_device_state (self .args .device_json ,device_state )
+                save_device_state (target_json ,device_state )
             except OSError :
                 pass 
         hb =self .heartbeat_flow (profile ,identity ,app_channel ,version ,cloud_guid )
@@ -1429,7 +1425,7 @@ class Resolver :
             raise YsptpError (f'dictionary HTTP {http_status_text (resp .status ,resp .reason )}')
     def app_start_flow (self ,client :HttpClient ,profile :DeviceProfile ,identity :Identity ,app_channel :str ,version :str )->AppStartResult :
         last =''
-        for attempt in range (1 ,5 ):
+        for attempt in range (1 ,3 ):
             if attempt >1 :
                 time .sleep (float (attempt -1 ))
             with self .control_request_slot ('app_start'):
@@ -1457,36 +1453,6 @@ class Resolver :
                         return AppStartResult (session_key =session_key )
                 last =f'app/start HTTP {status }: {text [:300 ]}'
         raise YsptpError (last )
-    def app_event_flow (self ,profile :DeviceProfile ,identity :Identity ,app_channel :str ,version :str )->None :
-        with self .control_request_slot ('app_event'):
-            event_time =current_time_ms ()
-            value =build_report_common_value (profile ,identity .x_uid ,app_channel ,version ,'',event_time )
-            value ['event_id']='app_start'
-            value ['event_name']='应用启动'
-            value ['event_time']=str (event_time )
-            value ['network_type']='WIFI'
-            value ['cur_version']=version 
-            value ['channel']=app_channel 
-            value ['pre_version']=version 
-            body ={'key':'event','value':value }
-            headers =fresh_headers (identity .headers ,'application/json','application/json',None )
-            headers ['UID']=''
-            resp =self .generic_client .post_json (REPORT_SINGLE_URL ,headers ,body )
-            if not 200 <=resp .status <300 :
-                raise YsptpError (f'app event HTTP {http_status_text (resp .status ,resp .reason )}')
-    def page_event_flow (self ,profile :DeviceProfile ,identity :Identity ,app_channel :str ,version :str ,session_id :str ,start_ms :int ,end_ms :int )->None :
-        with self .control_request_slot ('page_event'):
-            value =build_report_common_value (profile ,identity .x_uid ,app_channel ,version ,'',end_ms +2 )
-            value ['start_time']=str (start_ms )
-            value ['end_time']=str (end_ms )
-            value ['duration']=str (max (0 ,end_ms -start_ms ))
-            value ['page_name']=DEFAULT_PAGE_NAME 
-            value ['session_id']=session_id 
-            value ['network_type']='WIFI'
-            body ={'key':'page_d1','value':value }
-            resp =self .generic_client .post_json (REPORT_SINGLE_URL ,fresh_headers (identity .headers ,'application/json','application/json',None ),body )
-            if not 200 <=resp .status <300 :
-                raise YsptpError (f'page event HTTP {http_status_text (resp .status ,resp .reason )}')
     def cloud_registration_flow (self ,identity :Identity ,cloud_device_id :str )->str :
         body ={'device_name':DEFAULT_DEVICE_NAME ,'device_id':rsa_encrypt_device_id (cloud_device_id )}
         with self .control_request_slot ('cloud_get'):
@@ -1577,7 +1543,13 @@ class Resolver :
         playback_headers ['APPRANDOMSTR']=vdn .app_random_str 
         playback_headers ['APPSIGN']=vdn .app_sign 
         sess .linked_channels .add (channel )
-        return ChannelEntry (channel =channel ,live_id =live_id ,final_url =vdn .final_url ,playback_headers =playback_headers ,android_id =sess .profile .android_id ,x_uid =sess .identity .x_uid ,rate =live01 .rate ,rate_name =live01 .rate_name ,raw_live_host =url_host (live01 .live_url ),final_host =url_host (vdn .final_url ),refreshed_at =now ,expires_at =now +float (self .args .cache_ttl ),generation =generation ,last_refresh_error ='',last_refresh_failed_at =0.0 ,session_generation =sess .generation )
+        display_rate_name =live01 .rate_name or '高码率'
+        if channel in ('cctv4k','cctv164k','cctv8k'):
+            if '8K'in display_rate_name or display_rate_name in ('8K高清','8K超高清'):
+                display_rate_name ='4K超高清'
+        elif display_rate_name in ('8K高清','4K高清','8K超高清','4K超高清'):
+            display_rate_name ='高码率'
+        return ChannelEntry (channel =channel ,live_id =live_id ,final_url =vdn .final_url ,playback_headers =playback_headers ,android_id =sess .profile .android_id ,x_uid =sess .identity .x_uid ,rate =live01 .rate ,rate_name =display_rate_name ,raw_live_host =url_host (live01 .live_url ),final_host =url_host (vdn .final_url ),refreshed_at =now ,expires_at =now +float (self .args .cache_ttl ),generation =generation ,last_refresh_error ='',last_refresh_failed_at =0.0 ,session_generation =sess .generation )
     def live_v1_01_flow (self ,sess :AppSession ,live_id :str )->Live01Result :
         body ={'screenParam':sess .screen_param ,'rate':'','systemType':'ios','model':sess .cast_model ,'id':live_id ,'userId':DEFAULT_LIVE_USER_ID ,'clientSign':'cctvVideo','deviceId':{'serial':'','imei':'','android_id':''}}
         with self .control_request_slot ('live_v1_01'):
@@ -1662,55 +1634,43 @@ class Resolver :
         if not self .control_lock .acquire (blocking =False ):
             return 
         try :
-            try :
-                renewed =False 
-                with self .state_lock :
-                    s_curr =self .state .app_session 
-                    if s_curr is None :
-                        return 
-                    if not self .app_session_fresh (s_curr )or (self .app_session_ttl_remaining (s_curr )or 0.0 )<=300.0 :
-                        renewed =True 
-                sess =self .ensure_fresh_session ()
-                if renewed :
-                    log ('设备会话已自动续期 (Session Renewed)')
-            except Exception as e :
-                err_text =str (e )
-                with self .state_lock :
-                    if self .state .app_session is not None :
-                        self .state .app_session .last_heartbeat_error =f'session renewal failed: {err_text }'
-                    self .state .last_error =f'heartbeat renewal failed: {err_text }'
-                log (f'心跳会话续期失败: {err_text }')
+            with self .state_lock :
+                slots =list (self .state .sessions .keys ())
+            if not slots :
                 return 
-            with self .state_lock :
-                wait =float (self .args .refresh_interval )-(now_f64 ()-self .state .last_business_end_at )
-            if wait >0.0 :
-                time .sleep (wait )
-            try :
-                code =self .heartbeat_flow (sess .profile ,sess .identity ,'dangbei',sess .version ,sess .cloud_guid )
-            except YsptpError as err :
-                err_text =str (err )
-                with self .state_lock :
-                    if self .state .app_session is not None :
-                        self .state .app_session .last_heartbeat_error =err_text 
-                    self .state .last_error =f'heartbeat failed: {err_text }'
-                    self .state .last_error_at =now_f64 ()
-                return 
-            with self .state_lock :
-                self .state .last_business_end_at =now_f64 ()
-                if self .state .app_session is not None :
-                    s =self .state .app_session 
-                    s .last_heartbeat_at =now_f64 ()
-                    s .heartbeat_count +=1 
-                    s .last_heartbeat_result =code 
-                    s .last_heartbeat_error =''
-            set_resolver_ready (True )
-            with self .state_lock :
-                standby =self .state .standby_session 
-            if standby is not None :
+            for slot in slots :
                 try :
-                    self .heartbeat_flow (standby .profile ,standby .identity ,'dangbei',standby .version ,standby .cloud_guid )
+                    with self .state_lock :
+                        s_curr =self .state .sessions .get (slot )
+                    if s_curr is None :
+                        continue 
+                    self .evict_idle_links (s_curr ,LINK_IDLE_TIMEOUT )
+                    rem_ttl =self .app_session_ttl_remaining (s_curr )
+                    if not self .app_session_fresh (s_curr )or (rem_ttl is not None and rem_ttl <=300.0 ):
+                        s_curr =self .ensure_slot_session (slot )
+                        continue 
+                    with self .state_lock :
+                        wait =float (self .args .refresh_interval )-(now_f64 ()-self .state .last_business_end_at )
+                    if wait >0.0 :
+                        time .sleep (wait )
+                    code =self .heartbeat_flow (s_curr .profile ,s_curr .identity ,'dangbei',s_curr .version ,s_curr .cloud_guid )
+                    with self .state_lock :
+                        self .state .last_business_end_at =now_f64 ()
+                        s_curr .last_heartbeat_at =now_f64 ()
+                        s_curr .heartbeat_count +=1 
+                        s_curr .last_heartbeat_result =code 
+                        s_curr .last_heartbeat_error =''
+                except YsptpError as err :
+                    err_text =str (err )
+                    with self .state_lock :
+                        s_curr =self .state .sessions .get (slot )
+                        if s_curr is not None :
+                            s_curr .last_heartbeat_error =err_text 
+                        self .state .last_error =f'heartbeat failed on slot {slot }: {err_text }'
+                        self .state .last_error_at =now_f64 ()
                 except Exception :
                     pass 
+            set_resolver_ready (True )
         finally :
             self .control_lock .release ()
     def proxy_playlist_ts_urls (self ,playlist :str ,proxy_origin :str ,proxy_prefix =None )->str :
@@ -1802,38 +1762,31 @@ class Resolver :
                 with self .state_lock :
                     self .state .playlist_cache [entry .channel ]=cached 
             return (body ,content_type ,miss_probe )
-    def fetch_channel_playlist (self ,channel :str ,host_header :str )->str :
+    def fetch_channel_playlist (self ,channel :str ,host_header :str ,proto :str ='http')->str :
+        with self .state_lock :
+            self .state .channel_last_access [channel ]=now_f64 ()
+        if self .zap_debounced (channel ):
+            log (f'[{channel }] 换台防抖: 先出 1080p, 停留后自动升码率',min_interval =10.0 )
+            return None 
         host =host_header .strip ()if host_header else f'localhost:{server_port }'
-        proxy_origin =f'http://{host }'
+        scheme =proto if proto in ('http','https')else 'http'
+        proxy_origin =f'{scheme }://{host }'
         entry =self .ensure_channel (channel )
         for attempt in range (2 ):
             try :
                 body ,_content_type ,_probe =self .fetch_playlist (entry ,proxy_origin )
+                self .clear_channel_cooldown (channel )
                 return body 
             except YsptpError as e :
                 err_str =str (e )
                 is_expiry ='HTTP 403'in err_str or 'HTTP 404'in err_str or 'HTTP 401'in err_str or 'upstream m3u8'in err_str 
                 if is_expiry and attempt ==0 :
-                    log (f'4K {channel } 播放地址已过期 ({err_str [:40 ]})，正在极速重取新地址…')
+                    log (f'[{channel }] 高码率播放地址已过期，正在极速重取新地址…',min_interval =4.0 )
                     with self .state_lock :
                         self .state .cache .pop (channel ,None )
                         self .state .playlist_cache .pop (channel ,None )
-                    try :
-                        entry =self .ensure_channel (channel ,force =True )
-                    except Exception as ref_err :
-                        if is_session_invalidating_error (str (ref_err )):
-                            self .rotate_device (str (ref_err ),clear_cache =True )
-                            entry =self .ensure_channel (channel ,force =True )
-                        else :
-                            raise 
+                    entry =self .ensure_channel (channel ,force =True )
                     continue 
-                elif is_expiry and attempt ==1 :
-                    log (f'4K {channel } 上游切片报过期或受限 ({err_str [:40 ]})，转入降级冷却')
-                    with self .state_lock :
-                        prev =self .state .channel_failures .get (channel )
-                        fail_cnt =(prev [2 ]+1 )if prev else 1 
-                        self .state .channel_failures [channel ]=(now_f64 (),err_str ,fail_cnt )
-                    raise 
                 raise 
     def status_json (self )->dict :
         with self .state_lock :
@@ -1880,7 +1833,7 @@ class Resolver :
                 f .flush ()
                 os .fsync (f .fileno ())
             os .replace (tmp_path ,self .args .meta_json )
-        except OSError :
+        except Exception :
             try :
                 if 'tmp_path'in locals ()and os .path .exists (tmp_path ):
                     os .remove (tmp_path )
@@ -1912,38 +1865,49 @@ def _playback_request_headers (playback_headers :dict ,extra :dict |None =None )
         headers .update (extra )
     return headers 
 def fetch_playlist_http1 (final_url :str ,playback_headers :dict ):
-    try :
-        parts =urllib .parse .urlsplit (final_url )
-    except ValueError as e :
-        raise YsptpError (f'invalid final URL: {e }')
-    if parts .scheme !='http':
-        raise YsptpError (f'manual playlist fetch currently expects http URL, got {parts .scheme }')
-    host =parts .hostname 
-    if not host :
-        raise YsptpError ('final URL missing host')
-    port =parts .port or 80 
-    host_header =f'{host }:{parts .port }'if parts .port else host 
-    target =parts .path or '/'
-    if parts .query :
-        target +='?'+parts .query 
-    headers =_playback_request_headers (playback_headers )
-    headers ['Host']=host_header 
-    conn =http .client .HTTPConnection (host ,port ,timeout =20 )
-    try :
+    current_url =final_url 
+    for _ in range (4 ):
         try :
-            conn .request ('GET',target ,headers =headers )
-            resp =conn .getresponse ()
-        except Exception as e :
-            raise YsptpError (_normalize_network_error (e ))
-        status =resp .status 
-        content_type =resp .getheader ('Content-Type')or 'application/vnd.apple.mpegurl'
+            parts =urllib .parse .urlsplit (current_url )
+        except ValueError as e :
+            raise YsptpError (f'invalid final URL: {e }')
+        if parts .scheme not in ('http','https'):
+            raise YsptpError (f'manual playlist fetch currently expects http or https URL, got {parts .scheme }')
+        host =parts .hostname 
+        if not host :
+            raise YsptpError ('final URL missing host')
+        is_https =(parts .scheme =='https')
+        port =parts .port or (443 if is_https else 80 )
+        host_header =f'{host }:{parts .port }'if parts .port else host 
+        target =parts .path or '/'
+        if parts .query :
+            target +='?'+parts .query 
+        headers =_playback_request_headers (playback_headers )
+        headers ['Host']=host_header 
+        if is_https :
+            conn =http .client .HTTPSConnection (host ,port ,timeout =20 ,context =ssl .create_default_context ())
+        else :
+            conn =http .client .HTTPConnection (host ,port ,timeout =20 )
         try :
-            body =resp .read ()
-        except Exception as e :
-            raise YsptpError (_normalize_network_error (e ))
-    finally :
-        conn .close ()
-    return (status ,content_type ,body .decode ('utf-8',errors ='replace'))
+            try :
+                conn .request ('GET',target ,headers =headers )
+                resp =conn .getresponse ()
+            except Exception as e :
+                raise YsptpError (_normalize_network_error (e ))
+            status =resp .status 
+            loc =resp .getheader ('Location')
+            content_type =resp .getheader ('Content-Type')or 'application/vnd.apple.mpegurl'
+            try :
+                body =resp .read ()
+            except Exception as e :
+                raise YsptpError (_normalize_network_error (e ))
+        finally :
+            conn .close ()
+        if status in (301 ,302 ,303 ,307 ,308 )and loc :
+            current_url =urllib .parse .urljoin (current_url ,loc )
+            continue 
+        return (status ,content_type ,body .decode ('utf-8',errors ='replace'))
+    raise YsptpError ('too many redirects fetching playlist')
 def query_param (url :str ,name :str ):
     if '?'not in url :
         return None 
@@ -2075,6 +2039,9 @@ class W :
     def list (self ,items ,tag ,wf ):
         self .head (9 ,tag )
         self .int (len (items ),0 )
+        if wf is not None :
+            for item in items :
+                wf (self ,item )
     def out (self ):
         return bytes (self .b )
 class R :
@@ -2312,7 +2279,7 @@ def bk_playurls (channel_id ,live_pid ,defn ='fhd'):
     t =_ckey (channel_id )
     q =urllib .parse .urlencode ({'atime':'120','livepid':live_pid ,'cnlid':channel_id ,'appVer':_CK_APPVER ,'app_version':'300090','caplv':'1','cmd':'2','defn':defn ,'device':'iPhone','encryptVer':'4.2','getpreviewinfo':'0','hevclv':'0','lang':'zh-Hans_CN','livequeue':'0','logintype':'1','nettype':'1','newnettype':'1','newplatform':str (_CK_PLATFORM ),'platform':str (_CK_PLATFORM ),'sdtfrom':'v3021','spacode':'23','spaudio':'1','spdemuxer':'6','spdrm':'2','spdynamicrange':'1','spflv':'1','spflvaudio':'1','sphdrfps':'60','sphttps':'1','spvcode':_BK_H264 ,'spvideo':'4','stream':'1','system':'1','sysver':'ios18.2.1','uhd_flag':_uhd_flag,'cKey':t ['cKey'],'guid':t ['guid'],'fntick':str (t ['ts']),'flowid':t ['flowId'],'playbacktime':'0'})
     req =urllib .request .Request ('https://bkliveinfo.ysp.cctv.cn/?'+q ,headers ={'User-Agent':'qqlive','Accept':'application/json'})
-    with urllib .request .urlopen (req ,timeout =15 )as r :
+    with urllib .request .urlopen (req ,timeout =5 )as r :
         p =json .loads (r .read ().decode ())
     if int (p .get ('iretcode',-1 ))!=0 :
         raise RuntimeError ('iretcode=%s %s'%(p .get ('iretcode'),p .get ('errinfo','')))
@@ -2332,7 +2299,7 @@ def bk_playurls (channel_id ,live_pid ,defn ='fhd'):
     return urls 
 def fetch_abs_playlist (url ,depth =0 ):
     req =urllib .request .Request (url ,headers ={'User-Agent':'qqlive','Referer':'https://live.cctv.cn/','Accept':'application/vnd.apple.mpegurl,application/json,*/*'})
-    with urllib .request .urlopen (req ,timeout =20 )as r :
+    with urllib .request .urlopen (req ,timeout =10 )as r :
         text =r .read ().decode ('utf-8','replace')
         final =r .geturl ()
     if depth <2 :
@@ -2418,6 +2385,7 @@ LOGO_BASE ='https://garysclub.sharewithyou.dpdns.org/logos/ysp-live-logos'
 UA ='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
 REFRESH_INTERVAL =10 
 IDLE_TIMEOUT =120 
+LINK_IDLE_TIMEOUT =15.0 
 WINDOW =300 
 MAX_SEGS =120 
 BK_URL_TTL =300 
@@ -2447,23 +2415,35 @@ def parse_catchup_time_val (val_str :str |None )->int |None :
     val =val_str .strip ()
     if not val :
         return None 
-    digits ="".join (c for c in val if c .isdigit ())
+    cst =datetime .timezone (datetime .timedelta (hours =8 ))
+    if 'T'in val or ('-'in val and ':'in val ):
+        try :
+            iso_val =val [:-1 ]+'+00:00'if val .upper ().endswith ('Z')else val 
+            dt =datetime .datetime .fromisoformat (iso_val )
+            if dt .tzinfo is None :
+                dt =dt .replace (tzinfo =cst )
+            return int (dt .timestamp ())
+        except Exception :
+            pass 
+    is_utc =val .upper ().endswith ('Z')
+    clean_val =re .sub (r'\.\d+','',val )
+    digits ="".join (c for c in clean_val if c .isdigit ())
     if not digits :
         return None 
     if len (digits )==10 :
         return int (digits )
     if len (digits )==13 :
         return int (int (digits )/1000 )
-    cst =datetime .timezone (datetime .timedelta (hours =8 ))
-    if len (digits )==14 :
+    tz =datetime .timezone .utc if is_utc else cst 
+    if len (digits )>=14 :
         try :
-            dt =datetime .datetime .strptime (digits ,"%Y%m%d%H%M%S").replace (tzinfo =cst )
+            dt =datetime .datetime .strptime (digits [:14 ],"%Y%m%d%H%M%S").replace (tzinfo =tz )
             return int (dt .timestamp ())
         except Exception :
             pass 
     if len (digits )==12 :
         try :
-            dt =datetime .datetime .strptime (digits ,"%Y%m%d%H%M").replace (tzinfo =cst )
+            dt =datetime .datetime .strptime (digits ,"%Y%m%d%H%M").replace (tzinfo =tz )
             return int (dt .timestamp ())
         except Exception :
             pass 
@@ -2502,7 +2482,7 @@ def parse_catchup_query (query_str :str )->tuple [int ,int ]|None :
     return None 
 _inflight_refresh :dict [str ,threading .Event ]={}
 _inflight_lock =threading .Lock ()
-def coalesce_refresh (slug :str ,refresh_fn ):
+def coalesce_refresh (slug :str ,refresh_fn ,timeout =None ):
     with _inflight_lock :
         if slug in _inflight_refresh :
             ev =_inflight_refresh [slug ]
@@ -2512,14 +2492,21 @@ def coalesce_refresh (slug :str ,refresh_fn ):
             _inflight_refresh [slug ]=ev 
             wait =False 
     if wait :
-        ev .wait (timeout =6.0 )
+        ev .wait (timeout =6.0 if timeout is None else timeout )
         return 
-    try :
-        refresh_fn ()
-    finally :
-        with _inflight_lock :
-            _inflight_refresh .pop (slug ,None )
-        ev .set ()
+    def _run ():
+        try :
+            refresh_fn ()
+        finally :
+            with _inflight_lock :
+                _inflight_refresh .pop (slug ,None )
+            ev .set ()
+    t =threading .Thread (target =_run ,daemon =True )
+    t .start ()
+    if timeout is not None :
+        ev .wait (timeout =timeout )
+    else :
+        t .join ()
 class ApiFlowLimiter :
     def __init__ (self ,min_interval_ms :int =700 ,jitter_ms :int =250 ):
         self .min_interval =min_interval_ms /1000.0 
@@ -2554,6 +2541,10 @@ class TsSegmentCache :
             data ,headers ,expire_at =item 
             if time .time ()>expire_at :
                 self .cache .pop (key ,None )
+                try :
+                    self .order .remove (key )
+                except ValueError :
+                    pass 
                 self .curr_bytes -=len (data )
                 self .misses +=1 
                 return None 
@@ -2566,6 +2557,10 @@ class TsSegmentCache :
             if key in self .cache :
                 old =self .cache .pop (key )
                 self .curr_bytes -=len (old [0 ])
+                try :
+                    self .order .remove (key )
+                except ValueError :
+                    pass 
             now =time .time ()
             while (self .curr_bytes +len (data )>self .max_bytes )and self .order :
                 old_key =self .order .popleft ()
@@ -2621,6 +2616,7 @@ class Channel :
         self .lock =threading .Lock ()
         self .segments ={}
         self .order =deque ()
+        self .seen_keys =deque (maxlen =MAX_SEGS *2 )
         self .seq =0 
         self .last_access =0.0 
         self .thread =None 
@@ -2639,8 +2635,6 @@ def seg_key (url ,pdt ):
         return 'pdt:'+pdt 
     p =urllib .parse .urlsplit (url )
     return p .scheme +'://'+p .netloc +p .path 
-def log (msg ):
-    print ('[%s] %s'%(time .strftime ('%H:%M:%S'),msg ),flush =True )
 def jce_fetch (ch ):
     global_flow_limiter .wait_slot ()
     now =int (time .time ())
@@ -2664,11 +2658,23 @@ def jce_fetch (ch ):
     if not segs :
         raise RuntimeError ('empty playlist')
     return segs 
+def defn_label (defn ):
+    d =(defn or '').strip ().lower ()
+    if d =='fhd':
+        return '1080p'
+    if d =='shd':
+        return '720p'
+    return defn or '1080p'
 def jce_refresh (ch ):
     segs =jce_fetch (ch )
     with ch .lock :
         added =0 
-        if not ch .order :
+        is_init =not ch .order 
+        if is_init :
+            for _ ,pdt ,url in segs :
+                k =seg_key (url ,pdt )
+                if k not in ch .seen_keys :
+                    ch .seen_keys .append (k )
             init_segs =segs [-25 :]if len (segs )>25 else segs 
             for dur ,pdt ,url in init_segs :
                 key =seg_key (url ,pdt )
@@ -2686,6 +2692,9 @@ def jce_refresh (ch ):
                 if key in ch .segments :
                     ch .segments [key ][3 ]=url 
                     continue 
+                if key in ch .seen_keys :
+                    continue 
+                ch .seen_keys .append (key )
                 ch .seq +=1 
                 ch .segments [key ]=[ch .seq ,dur ,pdt ,url ]
                 ch .order .append (key )
@@ -2695,8 +2704,8 @@ def jce_refresh (ch ):
         while len (ch .order )>MAX_SEGS :
             ch .segments .pop (ch .order .popleft (),None )
         ch .last_error =''
-    if added :
-        log ('%s +%d 片 (共%d)'%(ch .slug ,added ,len (ch .segments )))
+    if is_init and added :
+        log (f'[{ch .slug }] {defn_label (ch .defn )} 备用流缓冲就绪 ({len (ch .segments )} 片)')
     return True 
 def bk_refresh (ch ):
     global_flow_limiter .wait_slot ()
@@ -2704,10 +2713,10 @@ def bk_refresh (ch ):
     if now -ch .bk_urls_time >BK_URL_TTL or not ch .bk_urls :
         ch .bk_urls =bk_playurls (ch .sid ,ch .pid ,ch .defn )
         ch .bk_urls_time =now 
-        log ('%s bkliveinfo 拿到 %d 个地址'%(ch .slug ,len (ch .bk_urls )))
+        log (f'[{ch .slug }] bkliveinfo 备用通道就绪 ({len (ch .bk_urls )} 地址)',min_interval =60.0 )
     last_err =''
     for attempt in range (2 ):
-        for u in ch .bk_urls :
+        for u in list (ch .bk_urls ):
             try :
                 pl =fetch_abs_playlist (u )
                 if '#EXTM3U'not in pl :
@@ -2725,7 +2734,7 @@ def bk_refresh (ch ):
             try :
                 ch .bk_urls =bk_playurls (ch .sid ,ch .pid ,ch .defn )
                 ch .bk_urls_time =time .time ()
-                log ('%s 地址疑似过期, 已重取'%ch .slug )
+                log (f'[{ch .slug }] {defn_label (ch .defn )} 地址已过期，已重新拉取',min_interval =10.0 )
             except Exception :
                 pass 
     ch .bk_urls =[]
@@ -2740,48 +2749,57 @@ def refresh_once (ch ):
                 ok =jce_refresh (ch )
             except DeadHostError :
                 ch .mode ='bk'
-                log ('%s JCE 返回坏域名, 切换 bkliveinfo'%ch .slug )
+                log (f'[{ch .slug }] JCE 域名受限，自动切换 bkliveinfo 备用通道',min_interval =10.0 )
                 ok =bk_refresh (ch )
         if ok :
             ch .last_ok =time .time ()
         return ok 
     except Exception as e :
         ch .last_error =('%s: %s'%(type (e ).__name__ ,e ))[:120 ]
-        log ('%s 刷新失败: %s'%(ch .slug ,ch .last_error ))
+        log (f'[{ch .slug }] {defn_label (ch .defn )} 刷新异常: {ch .last_error }',min_interval =15.0 )
         return False 
 def refresh_loop (ch ):
-    log ('%s 后台刷新启动 [%s]'%(ch .slug ,ch .mode ))
+    log (f'[{ch .slug }] {defn_label (ch .defn )} 后台拉取启动 [{ch .mode }]',min_interval =10.0 )
     fails =0 
+    if time .time ()-ch .last_ok <REFRESH_INTERVAL :
+        build_playlist (ch ,holdback =True )
+        time .sleep (REFRESH_INTERVAL )
     while time .time ()-ch .last_access <IDLE_TIMEOUT :
         ok =refresh_once (ch )
         if ok :
             build_playlist (ch ,holdback =True )
         fails =0 if ok else fails +1 
         time .sleep (REFRESH_INTERVAL if fails <3 else 30 )
-    log ('%s 无人观看, 停止刷新'%ch .slug )
+    log (f'[{ch .slug }] 空闲超时，已停止后台拉取',min_interval =10.0 )
 def ensure_channel (ch ):
     now =time .time ()
     ch .last_access =now 
+    wait_only =False 
     with ch .lock :
         if ch ._starting :
-            return 
-        thread_dead =ch .thread is None or not ch .thread .is_alive ()
-        cache_stale =now -ch .last_ok >30.0 or (not ch .segments and (not ch .bk_playlist ))
-        if cache_stale :
-            ch .segments .clear ()
-            ch .order .clear ()
-            ch .last_pdt =''
-            ch .bk_playlist =''
-            need_fetch =True 
+            wait_only =True 
         else :
-            need_fetch =False 
-        if need_fetch or thread_dead :
-            ch ._starting =True 
-        else :
-            return 
+            thread_dead =ch .thread is None or not ch .thread .is_alive ()
+            cache_stale =now -ch .last_ok >IDLE_TIMEOUT or (not ch .segments and (not ch .bk_playlist ))
+            if cache_stale :
+                ch .segments .clear ()
+                ch .order .clear ()
+                ch .seen_keys .clear ()
+                ch .last_pdt =''
+                ch .bk_playlist =''
+                need_fetch =True 
+            else :
+                need_fetch =False 
+            if need_fetch or thread_dead :
+                ch ._starting =True 
+            else :
+                return 
+    if wait_only :
+        coalesce_refresh (ch .slug ,lambda :refresh_once (ch ),timeout =5.0 )
+        return 
     try :
         if need_fetch :
-            coalesce_refresh (ch .slug ,lambda :refresh_once (ch ))
+            coalesce_refresh (ch .slug ,lambda :refresh_once (ch ),timeout =5.0 )
         if thread_dead :
             ch .thread =threading .Thread (target =refresh_loop ,args =(ch ,),daemon =True )
             ch .thread .start ()
@@ -2857,8 +2875,44 @@ def get_channel_instance (slug :str )->Channel |None :
         return ch 
     return None 
 engine_port =8787 
-def fetch_upstream_engine_playlist (canonical :str ,host :str )->str |None :
+ALLOWED_ENGINE_PROXY_SUFFIXES =('.cctv.cn','.cctv.com','.yangshipin.cn','.cntv.cn','.cntv.com','.myqcloud.com','.qqlive.com','.gtimg.cn','.alicdn.com','.alikunlun.com')
+def _is_safe_engine_proxy_url (target :str ,_depth :int =0 )->bool :
+    if _depth >2 :
+        return False 
+    try :
+        parsed =urllib .parse .urlsplit (target )
+    except ValueError :
+        return False 
+    if parsed .scheme not in ('http','https'):
+        return False 
+    host =(parsed .hostname or '').lower ()
+    if not host :
+        return False 
+    if host in ('127.0.0.1','localhost'):
+        if parsed .port !=engine_port or not parsed .path .startswith ('/segment'):
+            return False 
+        qs =urllib .parse .parse_qs (parsed .query )
+        inner =qs .get ('url',[None ])[0 ]
+        return bool (inner )and _is_safe_engine_proxy_url (inner ,_depth +1 )
+    return any ((host ==s [1 :]or host .endswith (s )for s in ALLOWED_ENGINE_PROXY_SUFFIXES ))
+def inject_hls_discontinuity (pl :str )->str :
+    if '#EXT-X-DISCONTINUITY'in pl :
+        return pl 
+    lines =pl .splitlines ()
+    out =[]
+    inserted =False 
+    for line in lines :
+        s =line .strip ()
+        if not inserted and (s .startswith ('#EXT-X-PROGRAM-DATE-TIME:')or s .startswith ('#EXTINF:')or (s and not s .startswith ('#'))):
+            out .append ('#EXT-X-DISCONTINUITY')
+            inserted =True 
+        out .append (line )
+    if not inserted :
+        return pl 
+    return '\n'.join (out )+('\n'if pl .endswith ('\n')else '')
+def fetch_upstream_engine_playlist (canonical :str ,host :str ,proto :str ='http')->str |None :
     global engine_port 
+    scheme =proto if proto in ('http','https')else 'http'
     for u in (f'http://127.0.0.1:{engine_port }/live/{canonical }.m3u8',f'http://127.0.0.1:{engine_port }/{canonical }.m3u8'):
         try :
             req =urllib .request .Request (u ,headers ={'User-Agent':UA })
@@ -2866,7 +2920,7 @@ def fetch_upstream_engine_playlist (canonical :str ,host :str )->str |None :
                 if resp .status ==200 :
                     text =resp .read ().decode ('utf-8',errors ='ignore')
                     if '#EXTM3U'in text :
-                        base_prefix =f'http://{host }/engine_proxy?url='
+                        base_prefix =f'{scheme }://{host }/engine_proxy?url='
                         out_lines =[]
                         for line in text .splitlines ():
                             line_str =line .strip ()
@@ -2885,7 +2939,7 @@ def fetch_upstream_engine_playlist (canonical :str ,host :str )->str |None :
             pass 
     return None 
 class Handler (BaseHTTPRequestHandler ):
-    server_version ='ysp-live/9.0.0'
+    server_version ='ysp-live/9.5.0'
     def log_message (self ,fmt ,*args ):
         pass 
     def _send (self ,code ,body ,ctype ='text/plain; charset=utf-8',head_only =False ,extra_headers =None ):
@@ -2913,7 +2967,12 @@ class Handler (BaseHTTPRequestHandler ):
         if path in ('/','/index.html'):
             host =self .headers .get ('Host',f'localhost:{server_port }')
             text =(
-            f"ysp-live IPTV 直播网关运行中 (端口: {server_port })\n\n"
+            f"====================================================\n"
+            f"ysp-live IPTV 直播网关运行中 (端口: {server_port })\n"
+            f"📢 官方发布社区: {AUTHOR_COMMUNITY}\n"
+            f"📢 官方发布频道: {AUTHOR_CHANNEL}\n"
+            f"⚠️ 严正声明: 其他任何渠道均非作者发布！\n"
+            f"====================================================\n\n"
             f"全频道订阅: http://{host }/cctv.m3u\n"
             f"节目单: http://{host }/epg.xml\n"
             f"系统健康度: http://{host }/health\n"
@@ -2930,12 +2989,17 @@ class Handler (BaseHTTPRequestHandler ):
             sess =resolver .state .app_session if resolver else None 
             engine_ready =resolver_ready ()
             cache_info =global_ts_cache .stats ()
+            active_slots =len ([s for s in (resolver .state .sessions .values ()if resolver else [])if s and resolver .app_session_fresh (s )])
             health_data ={
             "ok":True ,
-            "version":"9.0.0",
+            "version":"9.5.0",
+            "author_community":AUTHOR_COMMUNITY ,
+            "author_channel":AUTHOR_CHANNEL ,
+            "notice":"其他渠道均非作者发布！",
             "uptime_sec":int (now -server_start_time ),
             "engine":{
             "ready":engine_ready ,
+            "active_device_slots":active_slots ,
             "session_valid":bool (sess and resolver and resolver .app_session_fresh (sess )),
             "heartbeat_count":sess .heartbeat_count if sess else 0 ,
             "guid":sess .cloud_guid if sess else ""
@@ -2948,13 +3012,13 @@ class Handler (BaseHTTPRequestHandler ):
             return 
         if path =='/cctv.m3u':
             host =self .headers .get ('Host',f'localhost:{server_port }')
-            proto =self .headers .get ('X-Forwarded-Proto','http')
+            proto =self .headers .get ('X-Forwarded-Proto','http').split (',')[0 ].strip ().lower ()or 'http'
             qs =urllib .parse .parse_qs (parts .query )
             target_group =qs .get ('group',[None ])[0 ]
             k4_val =qs .get ('k4',['0'])[0 ].lower ()
             only_4k =k4_val in ('1','true','yes')
             lines =[
-            'f"#EXTM3U url-tvg=\"{proto}://{host}/epg.xml\""',
+            f'#EXTM3U url-tvg="{proto}://{host}/epg.xml"',
             '#EXT-X-APTV-PREVIEW: FALSE',
             '#EXT-X-APTV-LATENCY: FALSE',
             '#EXT-X-APTV-LOGO: FALSE'
@@ -2993,20 +3057,23 @@ class Handler (BaseHTTPRequestHandler ):
         if path =='/diag':
             info =[]
             now =time .time ()
+            info .append ("====================================================")
+            info .append (f"ysp-live v9.5 诊断报告 (运行时间: {int (now -server_start_time )}s)")
+            info .append ("📢 首发地址")
+            info .append (f"社区：Gary's Club ({AUTHOR_COMMUNITY})")
+            info .append (f"频道：Gary's Club Channel ({AUTHOR_CHANNEL})")
+            info .append ("⚠️ 其他任何分发渠道均非作者本人！")
+            info .append ("====================================================")
             engine_status ='就绪'if resolver_ready ()else '未就绪(1080p自动回退)'
-            sess =resolver .state .app_session if resolver else None 
-            standby =resolver .state .standby_session if resolver else None 
-            linked_count =len (sess .linked_channels )if sess else 0 
+            s0 =resolver .state .sessions .get (0 )if resolver else None 
+            if s0 and resolver :
+                resolver .evict_idle_links (s0 ,LINK_IDLE_TIMEOUT )
             links_limit_cfg =getattr (resolver .args ,'links_per_device',6 )if resolver else 6 
-            standby_text ='就绪'if standby else ('注册中'if getattr (resolver ,'standby_in_progress',False )else '待命')
-            sess_info =f"主设备: {('有效'if sess and resolver and resolver .app_session_fresh (sess )else '未就绪')}, 配额={linked_count }/{links_limit_cfg }, 热备设备={standby_text }, 心跳次数={(sess .heartbeat_count if sess else 0 )}"
-            info .append (f"ysp-live v9.0 诊断报告 (运行时间: {int (now -server_start_time )}s)")
-            info .append (f"设备引擎状态: {engine_status } ({sess_info })")
-            info .append (f"主设备 GUID: {(sess .cloud_guid if sess else '无')}")
-            if standby :
-                info .append (f"热备设备 GUID: {standby .cloud_guid } (型号: {standby .profile .model })")
-            if sess and sess .last_heartbeat_error :
-                info .append (f'心跳日志: {sess .last_heartbeat_error }')
+            pool_ch_count =len (active_backend_channels )
+            info .append (f"单设备并发池状态: {engine_status }")
+            info .append (f"高码率设备状态 ({pool_ch_count } 路共用): {('有效'if s0 and resolver and resolver .app_session_fresh (s0 )else '未就绪')}, 占用={len (s0 .linked_channels )if s0 else 0 }/{links_limit_cfg }, 心跳={(s0 .heartbeat_count if s0 else 0 )}, GUID={(s0 .cloud_guid if s0 else '无')}")
+            if s0 and s0 .last_heartbeat_error :
+                info .append (f'Slot 0 心跳日志: {s0 .last_heartbeat_error }')
             c_stats =global_ts_cache .stats ()
             info .append (f"分片内存缓存: 条目={c_stats ['count']}, 占用={c_stats ['size_mb']}MB, 命中率={c_stats ['hit_rate']} (命中:{c_stats ['hits']}/未中:{c_stats ['misses']})")
             info .append ('--- 频道状态列表 ---')
@@ -3024,6 +3091,10 @@ class Handler (BaseHTTPRequestHandler ):
                         cooldown_str =f' [高码冷却剩{rem_sec }s]'
                 err_msg =ch .last_error if ch else '无'
                 info .append (f"{slug } ({ch_meta ['name']}) 模式={mode_str }{cooldown_str } 上次刷新={age } 错误={err_msg or '无'}")
+            if global_log_ring :
+                info .append ('--- 最近运行事件 (最新 30 条) ---')
+                clean_logs = [re.sub(r'\033\[[0-9;]*m', '', line) for line in list(global_log_ring)[-30:]]
+                info .extend (clean_logs)
             self ._send (200 ,'\n'.join (info )+'\n',head_only =head_only )
             return 
         if path in ('/proxy.ts','/proxy'):
@@ -3036,7 +3107,8 @@ class Handler (BaseHTTPRequestHandler ):
             except YsptpError as err :
                 self ._send (400 ,f'{err }\n',head_only =head_only )
                 return 
-            cached_item =global_ts_cache .get (real_url )
+            range_header =self .headers .get ('Range')
+            cached_item =global_ts_cache .get (real_url )if not range_header else None 
             if cached_item is not None :
                 cached_bytes ,cached_headers =cached_item 
                 try :
@@ -3070,7 +3142,6 @@ class Handler (BaseHTTPRequestHandler ):
                 if parts_url .query :
                     target +='?'+parts_url .query 
                 extra ={}
-                range_header =self .headers .get ('Range')
                 if range_header :
                     extra ['Range']=header_value_clean (range_header )
                 headers =_playback_request_headers (playback_headers ,extra )
@@ -3086,7 +3157,7 @@ class Handler (BaseHTTPRequestHandler ):
                     resp_headers_to_pass ={}
                     for k ,v in resp .getheaders ():
                         kl =k .lower ()
-                        if kl in ('content-type','content-range','accept-ranges','content-length'):
+                        if kl in ('content-type','content-range','accept-ranges','content-length','location'):
                             resp_headers_to_pass [k ]=v 
                     self .send_response (resp .status )
                     for k ,v in resp_headers_to_pass .items ():
@@ -3137,10 +3208,16 @@ class Handler (BaseHTTPRequestHandler ):
             if not target :
                 self ._send (400 ,'missing url\n',head_only =head_only )
                 return 
+            if not _is_safe_engine_proxy_url (target ):
+                self ._send (403 ,'forbidden url\n',head_only =head_only )
+                return 
             try :
                 req =urllib .request .Request (target ,headers ={'User-Agent':UA ,'Accept':'*/*'})
                 with urllib .request .urlopen (req ,timeout =10.0 )as resp :
-                    data =resp .read ()
+                    data =resp .read (35 *1024 *1024 +1 )
+                    if len (data )>35 *1024 *1024 :
+                        self ._send (502 ,'upstream segment too large\n',head_only =head_only )
+                        return 
                     self ._send (resp .status ,data ,resp .headers .get ('Content-Type','video/mp2t'),head_only =head_only )
             except Exception as e :
                 self ._send (502 ,f'engine proxy error: {e }\n',head_only =head_only )
@@ -3153,6 +3230,7 @@ class Handler (BaseHTTPRequestHandler ):
             if not ch :
                 self ._send (404 ,'未知频道\n',head_only =head_only )
                 return 
+            proto =self .headers .get ('X-Forwarded-Proto','http').split (',')[0 ].strip ().lower ()or 'http'
             if catchup_times and (canonical in TIMESHIFT_SUPPORTED ):
                 start_ts ,end_ts =catchup_times 
                 try :
@@ -3161,16 +3239,20 @@ class Handler (BaseHTTPRequestHandler ):
                     self ._send (200 ,pl ,'application/vnd.apple.mpegurl',head_only =head_only )
                     return 
                 except Exception as e :
-                    log ('回看/时移获取失败 [%s] (%d-%d): %s，回退直播'%(canonical ,start_ts ,end_ts ,e ))
+                    log (f'[{canonical }] 时移获取失败: {e }，回退直播',min_interval =10.0 )
             if canonical in active_backend_channels and resolver_ready ()and (resolver is not None ):
                 if not resolver .is_channel_in_cooldown (canonical ):
                     try :
                         host =self .headers .get ('Host',f'localhost:{server_port }')
-                        pl =resolver .fetch_channel_playlist (canonical ,host )
+                        pl =resolver .fetch_channel_playlist (canonical ,host ,proto )
                         if pl and '#EXTM3U'in pl :
                             with ch .lock :
+                                prev_src =getattr (ch ,'last_m3u8_source',None )
+                                ch .last_m3u8_source ='device'
                                 ch .last_built_playlist =''
                                 ch .last_built_time =0.0 
+                            if prev_src =='bk':
+                                pl =inject_hls_discontinuity (pl )
                             self ._send (200 ,pl ,'application/vnd.apple.mpegurl',head_only =head_only )
                             return 
                     except Exception as e :
@@ -3188,13 +3270,19 @@ class Handler (BaseHTTPRequestHandler ):
                             cd_sec =60 
                         else :
                             cd_sec =120 
-                        log (f'4K/高码率 {canonical } 获取失败: {e }，自动回退 1080p (进入冷却 {cd_sec }s)')
+                        clean_err =str (e ).strip ()
+                        log (f'[{canonical }] 高码率播放暂时受限 ({clean_err })，平滑回退 1080p (冷却 {cd_sec }s)',min_interval =5.0 )
             now_ts =time .time ()
             ch .last_access =now_ts 
             with ch .lock :
                 cached_pl =ch .last_built_playlist 
                 cached_age =now_ts -ch .last_built_time 
             if cached_pl and cached_age <15.0 and ('#EXTM3U'in cached_pl ):
+                with ch .lock :
+                    prev_src =getattr (ch ,'last_m3u8_source',None )
+                    ch .last_m3u8_source ='bk'
+                if prev_src =='device':
+                    cached_pl =inject_hls_discontinuity (cached_pl )
                 self ._send (200 ,cached_pl ,'application/vnd.apple.mpegurl',head_only =head_only ,extra_headers ={'X-SWR':'HIT'})
                 if cached_age >6.0 :
                     trigger_background_refresh (ch )
@@ -3202,9 +3290,14 @@ class Handler (BaseHTTPRequestHandler ):
             ensure_channel (ch )
             pl =build_playlist (ch ,holdback =True )
             if pl and '#EXTM3U'in pl :
+                with ch .lock :
+                    prev_src =getattr (ch ,'last_m3u8_source',None )
+                    ch .last_m3u8_source ='bk'
+                if prev_src =='device':
+                    pl =inject_hls_discontinuity (pl )
                 self ._send (200 ,pl ,'application/vnd.apple.mpegurl',head_only =head_only )
                 return 
-            upstream_pl =fetch_upstream_engine_playlist (canonical ,self .headers .get ('Host',f'localhost:{server_port }'))
+            upstream_pl =fetch_upstream_engine_playlist (canonical ,self .headers .get ('Host',f'localhost:{server_port }'),proto )
             if upstream_pl and '#EXTM3U'in upstream_pl :
                 self ._send (200 ,upstream_pl ,'application/vnd.apple.mpegurl',head_only =head_only )
                 return 
@@ -3214,32 +3307,20 @@ class Handler (BaseHTTPRequestHandler ):
 def init_resolver ():
     if resolver is None :
         return 
-    log ('正在初始化设备注册引擎… (首次启动约 5~10 秒)')
+    log ('[系统] 正在初始化设备协议并发池…')
     retry_count =0 
     while True :
         try :
-            resolver .ensure_fresh_session ()
+            resolver .ensure_slot_session (0 )
             set_resolver_ready (True )
-            resolver .replenish_standby_worker ()
-            log ('设备协议就绪：开始预热全部真4K频道…')
-            for ch_slug in ('cctv4k','cctv164k','cctv8k'):
-                try :
-                    log (f'正在预热 4K 频道: {ch_slug }...')
-                    resolver .ensure_channel (ch_slug ,force =True )
-                    ch =CHANNEL_MAP .get (ch_slug )
-                    if ch :
-                        ch .last_access =time .time ()
-                    log (f'4K 频道 {ch_slug } 预热完成')
-                except Exception as ch_err :
-                    log (f'4K 频道 {ch_slug } 预热暂缓: {ch_err } (后台自动重试)')
-            log ('真4K 频道预热就绪：已激活 (单端口模式)')
+            log (f'[系统] 设备身份就绪，高码率并发池已激活 (全部 {len (active_backend_channels )} 路按需解析)')
             break 
         except Exception as e :
             retry_count +=1 
-            log (f'设备协议初始化第 {retry_count } 次重试中: {e }，4K/高码率频道暂走 1080p 回退')
+            log (f'[系统] 设备协议初始化第 {retry_count } 次重试中: {e }，4K/高码率频道暂走 1080p 回退',min_interval =10.0 )
             set_resolver_ready (False )
-            if retry_count % 3 == 0 :
-                create_and_save_new_device (resolver .args .device_json )
+            if 'HTTP 400'in str (e ):
+                resolver .rotate_device_on_400 ('init:'+str (e )[:60 ])
             backoff =min (15.0 * (1.5 ** min (retry_count - 1 ,4 )),60.0 )
             time .sleep (backoff )
 companion_proc =None 
@@ -3253,7 +3334,7 @@ def is_port_listening (port :int ,host :str ='127.0.0.1')->bool :
 def start_companion_engine (script_dir :str ,port :int =8787 ):
     global companion_proc 
     if is_port_listening (port ):
-        log (f'Web WASM 引擎已就绪: 端口 {port } 已处于运行状态')
+        log (f'[引擎] Web WASM 引擎已就绪: 端口 {port } 已处于运行状态')
         return 
     candidates =[
         os .path .join (script_dir ,'ysp-engine.js'),
@@ -3266,11 +3347,11 @@ def start_companion_engine (script_dir :str ,port :int =8787 ):
             engine_file =p 
             break 
     if not engine_file :
-        log ('未找到 ysp-engine.js，Web WASM 伴生引擎未启用')
+        log ('[引擎] 未找到 ysp-engine.js，Web WASM 伴生引擎未启用')
         return 
     node_bin =shutil .which ('node')
     if not node_bin :
-        log ('未检测到 node 可执行程序，Web WASM 伴生引擎未启用 (走设备协议/1080p 回退)')
+        log ('[引擎] 未检测到 node 可执行程序，Web WASM 伴生引擎未启用 (走设备协议/1080p 回退)')
         return 
     try :
         subp =__import__ ('subprocess')
@@ -3281,16 +3362,16 @@ def start_companion_engine (script_dir :str ,port :int =8787 ):
         )
         for _ in range (30 ):
             if is_port_listening (port ):
-                log (f'Web WASM 伴生引擎 (Node.js) 自动启动成功: 端口 {port }')
+                log (f'[引擎] Web WASM 伴生引擎 (Node.js) 自动启动成功: 端口 {port }')
                 return 
             time .sleep (0.1 )
         if companion_proc .poll ()is not None :
-            log ('警告: Web WASM 伴生引擎启动异常退出')
+            log ('[引擎] 警告: Web WASM 伴生引擎启动异常退出')
             companion_proc =None 
         else :
-            log (f'Web WASM 伴生引擎已在后台启动 (端口 {port })')
+            log (f'[引擎] Web WASM 伴生引擎已在后台启动 (端口 {port })')
     except Exception as e :
-        log (f'Web WASM 伴生引擎启动失败: {e }')
+        log (f'[引擎] Web WASM 伴生引擎启动失败: {e }')
         companion_proc =None 
 def stop_companion_engine ():
     global companion_proc 
@@ -3304,7 +3385,7 @@ def stop_companion_engine ():
                     p .wait (timeout =2.0 )
                 except Exception :
                     p .kill ()
-            log ('Web WASM 伴生引擎 (Node.js) 已停止')
+            log ('[引擎] Web WASM 伴生引擎 (Node.js) 已停止')
         except Exception :
             pass 
 atexit .register (stop_companion_engine )
@@ -3317,7 +3398,9 @@ except Exception :
     pass 
 def main ():
     global resolver ,server_port ,engine_port ,global_channel_dir ,global_ts_cache 
-    ap =argparse .ArgumentParser (description ='央视频全频道直播代理（ysp-live v9.0 旗舰单端口版）')
+    if os.name == 'nt':
+        os.system('') 
+    ap =argparse .ArgumentParser (description ='央视频全频道直播代理（ysp-live v9.5）')
     ap .add_argument ('port',nargs ='?',type =int ,default =8767 ,help ='监听端口 (默认 8767)')
     ap .add_argument ('--bind',default ='0.0.0.0',help ='监听地址 (默认 0.0.0.0)')
     ap .add_argument ('--data-dir',default =os .environ .get ('YSP_DATA_DIR',''),help ='数据持久化目录 (默认由 YSP_DATA_DIR 环境变量或脚本所在目录决定)')
@@ -3325,7 +3408,9 @@ def main ():
     ap .add_argument ('--no-4k',action ='store_true',help ='不启动设备协议 (仅走 1080p JCE/bkliveinfo)')
     ap .add_argument ('--only-4k',action ='store_true',help ='仅 4K/8K 频道走设备协议 (默认全部 26 个高码率频道走设备协议)')
     ap .add_argument ('--links-per-device',type =int ,default =int (os .environ .get ('YSP_LINKS_PER_DEVICE','6')),help ='单设备高码率链接配额上限 (默认 6, 设为 0 关闭主动轮换)')
+    ap .add_argument ('--zap-debounce',type =float ,default =float (os .environ .get ('YSP_ZAP_DEBOUNCE','10.0')),help ='换台防抖秒数: 切台后先出 1080p, 停留超过该秒数才后台请求高码率 (默认 10.0, 设为 0 关闭)')
     ap .add_argument ('--engine-port',type =int ,default =8787 ,help ='Web WASM 引擎端口 (默认 8787)')
+    ap .add_argument ('--timeout',type =float ,default =10.0 ,help ='设备协议 HTTP 超时秒数 (默认 10, 注册失败时更快回退 1080p)')
     ap .add_argument ('--no-engine',action ='store_true',help ='不启动 Web WASM 伴生引擎')
     args =ap .parse_args ()
     server_port =args .port 
@@ -3346,20 +3431,23 @@ def main ():
         with open (test_file ,'w')as f :
             f .write ('ok')
         os .remove (test_file )
-        log (f'持久化存储目录: {data_dir } (读写权限正常)')
+        log (f'[系统] 持久化存储目录: {data_dir } (读写权限正常)')
     except OSError as e :
-        log (f'警告: 持久化目录 {data_dir } 写入受限 ({e })，状态将保持内存模式。建议在宿主机执行: chmod -R 777 ./data')
+        log (f'[系统] 警告: 持久化目录 {data_dir } 写入受限 ({e })，状态将保持内存模式')
     global active_backend_channels 
     only_4k_mode =args .only_4k or (os .environ .get ('YSP_ONLY_4K_DEVICE','').lower ()in ('1','true','yes'))
     links_limit =max (0 ,int (args .links_per_device ))
-    if only_4k_mode :
+    if args .no_4k :
+        active_backend_channels =set ()
+        log ('[系统] 高码率模式: 已禁用 (--no-4k)，全频道走 1080p JCE/bkliveinfo')
+    elif only_4k_mode :
         active_backend_channels =set (TRUE_4K_CHANNELS )
-        log ('高码率模式: 仅 4K/8K 频道走设备协议 (其余走 1080p JCE/bkliveinfo)')
+        log ('[系统] 高码率模式: 仅 4K/8K 频道走设备协议 (其余走 1080p JCE/bkliveinfo)')
     else :
         active_backend_channels =set (BACKEND_CHANNELS )
-        log (f'高码率模式: 全部 26 个高码率频道走设备协议 (单设备配额上限: {links_limit })')
+        log (f'[系统] 高码率模式: 全部 26 个高码率频道走单设备并发池 (1 台设备, 高码率并发上限: {links_limit } 路, 空闲超 {LINK_IDLE_TIMEOUT }s 释放配额, 换台防抖: {float (args .zap_debounce )}s)')
     engine_args =argparse .Namespace (
-    host =args .bind ,port =args .port ,timeout =20.0 ,insecure_tls =False ,cache_ttl =60.0 ,
+    host =args .bind ,port =args .port ,timeout =float (args .timeout ),insecure_tls =False ,cache_ttl =60.0 ,
     stale_while_refresh_ttl =0.0 ,refresh_error_cooldown =5.0 ,playlist_cache_ttl =2.0 ,
     background_refresh_queue_limit =4 ,http_workers =16 ,http_queue_limit =1000 ,
     identity_reset_error_threshold =0 ,identity_reset_cooldown =300.0 ,refresh_interval =1.0 ,
@@ -3367,31 +3455,39 @@ def main ():
     heartbeat_ttl_guard =60.0 ,session_ttl =7200.0 ,
     meta_json =os .path .join (data_dir ,'proxy-cache-state-rs.json'),
     device_json =os .path .join (data_dir ,'device-state-rs.json'),
-    links_per_device =links_limit 
+    links_per_device =links_limit ,
+    zap_debounce =float (args .zap_debounce )
     )
     resolve_paths (engine_args )
     resolver =Resolver (engine_args )
     if not args .no_4k :
         resolver .start_heartbeat ()
         resolver .start_refresh_worker ()
-        resolver .start_keep_warm_worker ()
         threading .Thread (target =init_resolver ,daemon =True ,name ='engine-init').start ()
     srv =ThreadingHTTPServer ((args .bind ,args .port ),Handler )
     channels_count =len (global_channel_dir .unique_channels ())
     c_fhd =len ([c for c in global_channel_dir .unique_channels ()if c ['group']=='央视FHD'])
     c_uhd =len ([c for c in global_channel_dir .unique_channels ()if c ['group']=='央视UHD'])
     c_cgtn =len ([c for c in global_channel_dir .unique_channels ()if c ['group']=='CGTN'])
+    RED_BOLD = '\033[1;31m'
+    RESET = '\033[0m'
+
     log ('====================================================================')
-    log (f'ysp-live v9.0 启动成功: {channels_count } 个独立频道 (央视FHD {c_fhd } 路, 央视UHD {c_uhd } 路, CGTN {c_cgtn } 路)')
+    log (f'ysp-live v9.5 启动成功: {channels_count } 个独立频道 (央视FHD {c_fhd } 路, 央视UHD {c_uhd } 路, CGTN {c_cgtn } 路)')
     log (f'全频道订阅:   http://localhost:{args .port }/cctv.m3u')
     log (f'节目单:       http://localhost:{args .port }/epg.xml')
     log (f'系统健康度:   http://localhost:{args .port }/health')
     log (f'实时诊断日志: http://localhost:{args .port }/diag')
-    log ('====================================================================')
+    log (f'{RED_BOLD}--------------------------------------------------------------------{RESET}')
+    log (f'{RED_BOLD}📢 首发地址{RESET}')
+    log (f'{RED_BOLD}社区：Gary\'s Club ({AUTHOR_COMMUNITY}){RESET}')
+    log (f'{RED_BOLD}频道：Gary\'s Club Channel ({AUTHOR_CHANNEL}){RESET}')
+    log (f'{RED_BOLD}⚠️ 其他任何分发渠道均非作者本人！{RESET}')
+    log (f'{RED_BOLD}===================================================================={RESET}')
     try :
         srv .serve_forever ()
     except KeyboardInterrupt :
-        log ('服务已停止')
+        log ('[系统] 服务已停止')
     finally :
         stop_companion_engine ()
 if __name__ =='__main__':

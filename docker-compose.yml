@@ -1,6 +1,6 @@
 services:
   ysp-live:
-    image: ysp-live:9.0
+    image: ysp-live:9.5
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,3 +14,8 @@ services:
       - TZ=Asia/Shanghai
       - PYTHONUNBUFFERED=1
       - YSP_DATA_DIR=/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
