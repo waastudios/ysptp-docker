@@ -466,7 +466,7 @@ const server = http.createServer(async (req, res) => {
       res.end('invalid url\n');
       return;
     }
-    const allowedSuffixes = ['.cctv.cn', '.cctv.com', '.yangshipin.cn', '.cntv.cn', '.cntv.com', '.myqcloud.com', '.qqlive.com', '.gtimg.cn', '.alicdn.com', '.alikunlun.com'];
+    const allowedSuffixes = ['.cctv.cn', '.cctv.com', '.cctvpic.com', '.citvc.com', '.yangshipin.cn', '.cntv.cn', '.cntv.com', '.myqcloud.com', '.qqlive.com', '.gtimg.cn', '.smtcdns.net', '.smtcdns.com', '.tcdnlive.com', '.alicdn.com', '.alikunlun.com', '.wscdns.com', '.chinanetcenter.com', '.bdydns.com', '.ksyungslb.com', '.ks-cdn.com'];
     const thost = (targetParsed.hostname || '').toLowerCase();
     if ((targetParsed.protocol !== 'http:' && targetParsed.protocol !== 'https:') || !allowedSuffixes.some(s => thost === s.slice(1) || thost.endsWith(s))) {
       res.writeHead(403, { 'Content-Type': 'text/plain' });

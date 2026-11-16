@@ -1,4 +1,4 @@
-# ysp-live v9.5
+# ysp-live v9.6
 
 > **致谢**
 > 1. 感谢 [IPTV 总部](http://t.me/iptvorganization)分享的算法源码
@@ -96,6 +96,16 @@ docker compose down            # 停止
 
 ## 更新日志
 
+### v9.6 (2026-11-16)
+- 上游：JCE 限流退避——请求全局串行（间隔至少 2 秒），限流触发共享冷却，首次 60 秒、连续限流递增至 900 秒，遵守 Retry-After；冷却期间不切换提供方绕过限流
+- 上游：冷启动顺序调整——符合设备接口条件的频道，无有效低码率缓存时直接尝试设备接口
+- 上游：低码率频道 20 秒无新请求后停后台轮询；缓存仅 30 秒新鲜期内复用
+- 上游：低码率滚动窗口只输出已完成分片，保留一个分片的安全余量
+- 上游：引擎代理域名白名单扩充（新增央视 CDN 域名）
+- 上游说明：本次改动仅完成模拟数据测试，尚未完成 iOS 端到端实机验证
+- 本定制版：30 路（仅 CCTV/CGTN），分组 央视FHD/央视UHD/CGTN
+- 内置 EPG 聚合（`/epg.xml`），4K 频道锁死真 4K
+
 ### v9.5 (2026-10-17)
 - 上游：状态持久化与 400 自愈落盘修复，400 换设备不再中断自愈
 - 上游：换台防抖精准化，切走自动取消高码率预取，减少风控消耗
@@ -118,7 +128,7 @@ docker compose down            # 停止
 
 ```bash
 cd /opt/ysp-live-docker && docker compose down -v
-docker rmi ysp-live:9.5
-cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.5.zip
+docker rmi ysp-live:9.6
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.6.zip
 ```
 `docker compose down -v` 会连设备注册数据一起删除。

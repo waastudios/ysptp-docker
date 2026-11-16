@@ -39,7 +39,7 @@ try:
 except ImportError:
     _HAS_EPG = False
     EpgAggregator = None
-__version__ ='9.5.0'
+__version__ ='9.6.1'
 AUTHOR_COMMUNITY ='https://t.me/garysclub'
 AUTHOR_CHANNEL ='https://t.me/garysclubchannel'
 AUTHOR_NOTICE =f'''📢 首发地址
@@ -1762,10 +1762,10 @@ class Resolver :
                 with self .state_lock :
                     self .state .playlist_cache [entry .channel ]=cached 
             return (body ,content_type ,miss_probe )
-    def fetch_channel_playlist (self ,channel :str ,host_header :str ,proto :str ='http')->str :
+    def fetch_channel_playlist (self ,channel :str ,host_header :str ,proto :str ='http', *, allow_zap_debounce:bool=True)->str :
         with self .state_lock :
             self .state .channel_last_access [channel ]=now_f64 ()
-        if self .zap_debounced (channel ):
+        if allow_zap_debounce and self .zap_debounced (channel ):
             log (f'[{channel }] 换台防抖: 先出 1080p, 停留后自动升码率',min_interval =10.0 )
             return None 
         host =host_header .strip ()if host_header else f'localhost:{server_port }'
@@ -2187,7 +2187,69 @@ def _unwrap (data ):
     return rc .get (1 )or b''
 class DeadHostError (RuntimeError ):
     pass 
-def jce_timeshift_url (pid ,sid ,start ,end ,stream ='fhd'):
+class JceRateLimited(RuntimeError):
+    pass
+
+class JceRequestGate:
+    """Serialize JCE requests; honour upstream throttling across all channels."""
+    def __init__(self, clock=time.monotonic, sleep=time.sleep):
+        self.lock = threading.Lock()
+        self.clock, self.sleep = clock, sleep
+        self.next_request = 0.0
+        self.blocked_until = 0.0
+        self.penalty = 0.0
+
+    def remaining(self):
+        return max(0.0, self.blocked_until - self.clock())
+
+    def throttle(self, retry_after=None):
+        self.penalty = min(900.0, max(60.0, self.penalty * 2.0))
+        delay = self.penalty
+        if retry_after:
+            try:
+                delay = max(delay, float(retry_after))
+            except (ValueError, TypeError):
+                try:
+                    from email.utils import parsedate_to_datetime
+                    delay = max(delay, parsedate_to_datetime(retry_after).timestamp() - time.time())
+                except (ValueError, TypeError, OverflowError):
+                    pass
+        if not math.isfinite(delay):
+            delay = self.penalty
+        self.blocked_until = max(self.blocked_until, self.clock() + delay)
+        return JceRateLimited('JCE 请求已限流，暂停 %.0f 秒后再试' % self.remaining())
+
+    def call(self, fn, active=None):
+        with self.lock:
+            if self.remaining() > 0:
+                raise JceRateLimited('JCE 限流冷却中，剩余 %.0f 秒' % self.remaining())
+            delay = self.next_request - self.clock()
+            if delay > 0:
+                self.sleep(delay)
+            if active is not None and not active():
+                raise RuntimeError('低码率频道已空闲，取消排队请求')
+            self.next_request = self.clock() + 2.0
+            try:
+                result = fn()
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429:
+                    raise self.throttle(exc.headers.get('Retry-After') if exc.headers else None) from exc
+                raise
+            except RuntimeError as exc:
+                message = str(exc).lower()
+                if any(mark in message for mark in ('操作过于频繁', '请求过于频繁', 'too many requests', 'rate limit')):
+                    raise self.throttle() from exc
+                raise
+            # Only a successful upstream response resets repeated throttling.
+            self.penalty = 0.0
+            return result
+
+jce_request_gate = JceRequestGate()
+
+def jce_timeshift_url(pid, sid, start, end, stream='fhd', active=None):
+    return jce_request_gate.call(lambda: _jce_timeshift_url(pid, sid, start, end, stream), active)
+
+def _jce_timeshift_url (pid ,sid ,start ,end ,stream ='fhd'):
     w =W ()
     w .string (pid ,0 )
     w .string (sid ,1 )
@@ -2319,7 +2381,8 @@ def fetch_abs_playlist (url ,depth =0 ):
         else :
             out .append (ln )
     return '\n'.join (out )
-DEFAULT_CHANNELS =[('cctv1','CCTV-1 综合','2024078201','600001859','fhd'),
+DEFAULT_CHANNELS =[
+('cctv1','CCTV-1 综合','2024078201','600001859','fhd'),
 ('cctv2','CCTV-2 财经','2024075401','600001800','fhd'),
 ('cctv3','CCTV-3 综艺','2024068501','600001801','fhd'),
 ('cctv4','CCTV-4 中文国际','2029797101','600001814','fhd'),
@@ -2385,6 +2448,8 @@ LOGO_BASE ='https://garysclub.sharewithyou.dpdns.org/logos/ysp-live-logos'
 UA ='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
 REFRESH_INTERVAL =10 
 IDLE_TIMEOUT =120 
+LOW_STREAM_IDLE_TIMEOUT =20.0 
+LOW_PLAYLIST_MAX_AGE =30.0 
 LINK_IDLE_TIMEOUT =15.0 
 WINDOW =300 
 MAX_SEGS =120 
@@ -2613,6 +2678,7 @@ epg_aggregator = EpgAggregator(_EPG_WANTED_IDS) if _HAS_EPG else None
 class Channel :
     def __init__ (self ,slug ,name ,sid ,pid ,defn ):
         self .slug ,self .name ,self .sid ,self .pid ,self .defn =(slug ,name ,sid ,pid ,defn )
+        self.refresh_lock = threading.Lock()
         self .lock =threading .Lock ()
         self .segments ={}
         self .order =deque ()
@@ -2635,29 +2701,142 @@ def seg_key (url ,pdt ):
         return 'pdt:'+pdt 
     p =urllib .parse .urlsplit (url )
     return p .scheme +'://'+p .netloc +p .path 
-def jce_fetch (ch ):
-    global_flow_limiter .wait_slot ()
-    now =int (time .time ())
-    m3u8_url =jce_timeshift_url (ch .pid ,ch .sid ,now -WINDOW ,now ,ch .defn )
-    req =urllib .request .Request (m3u8_url ,headers ={'User-Agent':UA })
-    with urllib .request .urlopen (req ,timeout =20 )as r :
-        text =r .read ().decode ('utf-8','replace')
-    segs ,dur ,pdt =([],6.0 ,'')
-    for line in text .splitlines ():
-        line =line .strip ()
-        if line .startswith ('#EXTINF:'):
-            try :
-                dur =float (line [len ('#EXTINF:'):].split (',')[0 ])
-            except ValueError :
-                dur =6.0 
-        elif line .startswith ('#EXT-X-PROGRAM-DATE-TIME:'):
-            pdt =line [len ('#EXT-X-PROGRAM-DATE-TIME:'):]
-        elif line and (not line .startswith ('#')):
-            segs .append ((dur ,pdt ,urllib .parse .urljoin (m3u8_url ,line )))
-            pdt =''
-    if not segs :
-        raise RuntimeError ('empty playlist')
-    return segs 
+def jce_note_access(ch, now):
+    # Reset HLS continuity only after the same channel's established idle timeout.
+    # Keep resolved URL/expiry and all throttle state: reopening is not re-resolving.
+    if now - ch.last_access >= LOW_STREAM_IDLE_TIMEOUT and ch.refresh_lock.acquire(blocking=False):
+        try:
+            with ch.lock:
+                if now - ch.last_access >= LOW_STREAM_IDLE_TIMEOUT:
+                    for key in ('jce_live_tail', 'jce_live_rows', 'jce_target',
+                                'jce_accepted_generation', 'jce_sequence_offset',
+                                'jce_live_playlist', 'jce_live_media_end'):
+                        if hasattr(ch, key): delattr(ch, key)
+                    ch.last_built_playlist = ''
+                    ch.last_built_time = 0.0
+                    ch.last_ok = 0.0
+        finally:
+            ch.refresh_lock.release()
+    ch.last_access = now
+
+def parse_jce_live_window(text, base_url, now, with_target=False):
+    """Accept only plain contiguous media HLS; never synthesize segment URLs."""
+    lines = [x.strip() for x in text.splitlines() if x.strip()]
+    if not lines or lines[0] != '#EXTM3U':
+        raise RuntimeError('JCE invalid media playlist')
+    allowed = ('#EXTM3U', '#EXT-X-VERSION:', '#EXT-X-TARGETDURATION:',
+               '#EXT-X-MEDIA-SEQUENCE:', '#EXT-X-PROGRAM-DATE-TIME:',
+               '#EXTINF:', '#EXT-X-ENDLIST', '#EXT-X-PLAYLIST-TYPE:')
+    seq, duration, stamp, rows = 0, None, None, []
+    target = None
+    previous_end = None
+    for line in lines[1:]:
+        if line.startswith('#EXT') and not any(line == tag or line.startswith(tag) for tag in allowed):
+            raise RuntimeError('JCE unsupported HLS feature')
+        if line.startswith('#EXT-X-TARGETDURATION:'):
+            target = int(line.split(':', 1)[1])
+            if not 0 < target <= 30: raise RuntimeError('JCE invalid target duration')
+        elif line.startswith('#EXT-X-MEDIA-SEQUENCE:'):
+            if rows: raise RuntimeError('JCE late media sequence')
+            seq = int(line.split(':', 1)[1])
+            if seq < 0: raise RuntimeError('JCE invalid media sequence')
+        elif line.startswith('#EXT-X-PROGRAM-DATE-TIME:'):
+            value = datetime.datetime.fromisoformat(line.split(':', 1)[1].replace('Z', '+00:00'))
+            if value.tzinfo is None: raise RuntimeError('JCE PDT has no timezone')
+            stamp = value.timestamp()
+        elif line.startswith('#EXTINF:'):
+            if duration is not None: raise RuntimeError('JCE missing segment URI')
+            duration = float(line.split(':', 1)[1].split(',')[0])
+            if not math.isfinite(duration) or not 0 < duration <= 30:
+                raise RuntimeError('JCE invalid segment duration')
+        elif not line.startswith('#'):
+            if duration is None or stamp is None:
+                raise RuntimeError('JCE missing duration or PDT')
+            if previous_end is not None and abs(stamp - previous_end) > 0.05:
+                raise RuntimeError('JCE noncontiguous PDT')
+            url = urllib.parse.urljoin(base_url, line)
+            if urllib.parse.urlsplit(url).scheme not in ('http', 'https'):
+                raise RuntimeError('JCE invalid media URI')
+            rows.append((seq + len(rows), stamp, duration, url))
+            previous_end = stamp + duration
+            stamp, duration = previous_end, None
+    if target is None or any(math.floor(r[2]+0.5) > target for r in rows):
+        raise RuntimeError('JCE missing/invalid target duration')
+    if duration is not None or not rows:
+        raise RuntimeError('JCE incomplete media playlist')
+    completed = [r for r in rows if r[1] + r[2] <= now]
+    if len(completed) < 4 or now - (completed[-1][1] + completed[-1][2]) > 30:
+        raise RuntimeError('JCE no recent completed media')
+    selected = completed[:-1][-6:]
+    return (selected, target) if with_target else selected
+
+def jce_fetch(ch):
+    if time.time() < getattr(ch, 'jce_media_blocked_until', 0):
+        raise JceRateLimited('JCE media cooldown')
+    now = time.time()
+    # Normal JS live window: resolve once; retain the URL until end minus 60s.
+    if not getattr(ch, 'jce_live_url', '') or now >= ch.jce_live_expiry:
+        end = int(now) + 900
+        url = jce_timeshift_url(ch.pid, ch.sid, int(now)-120, end, ch.defn,
+            active=lambda: time.time()-ch.last_access < LOW_STREAM_IDLE_TIMEOUT)
+        ch.jce_live_url, ch.jce_live_expiry = url, end-60
+        ch.jce_anchor_generation = getattr(ch, 'jce_anchor_generation', 0) + 1
+    req = urllib.request.Request(ch.jce_live_url, headers={'User-Agent': UA})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            raw = response.read(2*1024*1024+1)
+            if len(raw) > 2*1024*1024: raise RuntimeError('JCE playlist too large')
+            text = raw.decode('utf-8', 'strict')
+            media_base = response.geturl()
+    except urllib.error.HTTPError as exc:
+        if exc.code == 429:
+            delay = 60.0
+            header = exc.headers.get('Retry-After') if exc.headers else None
+            if header:
+                try:
+                    delay = max(delay, float(header))
+                except (ValueError, TypeError):
+                    try:
+                        from email.utils import parsedate_to_datetime
+                        delay = max(delay, parsedate_to_datetime(header).timestamp()-time.time())
+                    except (ValueError, TypeError, OverflowError):
+                        pass
+            if not math.isfinite(delay): delay = 60.0
+            ch.jce_media_blocked_until = time.time() + delay
+            raise JceRateLimited('JCE media cooldown') from exc
+        # Do not force a new resolve or change provider on denial or bad content.
+        raise
+    rows, target = parse_jce_live_window(text, media_base, time.time(), with_target=True)
+    if getattr(ch, "jce_target", target) != target:
+        raise RuntimeError("JCE target duration changed; reopen required")
+    ch.jce_pending_target = target
+    offset = getattr(ch, 'jce_sequence_offset', 0)
+    if getattr(ch, 'jce_accepted_generation', 0) != ch.jce_anchor_generation:
+        old = getattr(ch, 'jce_live_rows', {})
+        if old:
+            offsets = {oldseq-seq for seq, stamp, duration, url in rows
+                       for oldseq, (oldstamp, oldduration) in old.items()
+                       if abs(stamp-oldstamp) < 0.05 and abs(duration-oldduration) < 0.05}
+            if len(offsets) != 1:
+                raise RuntimeError('JCE new window lacks unambiguous PDT overlap; reopen required')
+            offset = offsets.pop()
+        else:
+            offset = 0
+    rows = [(seq+offset, stamp, duration, url) for seq, stamp, duration, url in rows]
+    previous = getattr(ch, 'jce_live_tail', None)
+    tail = rows[-1]
+    if previous is not None:
+        if tail[0] < previous[0] or tail[1] < previous[1]:
+            raise RuntimeError('JCE live window regressed')
+        if (tail[0] == previous[0]) != (abs(tail[1]-previous[1]) < 0.05):
+            raise RuntimeError('JCE media sequence/PDT mismatch')
+        old = getattr(ch, 'jce_live_rows', {})
+        for seq, stamp, duration, url in rows:
+            if seq in old and (abs(stamp-old[seq][0]) > 0.05 or abs(duration-old[seq][1]) > 0.05):
+                raise RuntimeError('JCE overlapping media changed')
+    ch.jce_pending_offset = offset
+    return rows
+
 def defn_label (defn ):
     d =(defn or '').strip ().lower ()
     if d =='fhd':
@@ -2665,48 +2844,24 @@ def defn_label (defn ):
     if d =='shd':
         return '720p'
     return defn or '1080p'
-def jce_refresh (ch ):
-    segs =jce_fetch (ch )
-    with ch .lock :
-        added =0 
-        is_init =not ch .order 
-        if is_init :
-            for _ ,pdt ,url in segs :
-                k =seg_key (url ,pdt )
-                if k not in ch .seen_keys :
-                    ch .seen_keys .append (k )
-            init_segs =segs [-25 :]if len (segs )>25 else segs 
-            for dur ,pdt ,url in init_segs :
-                key =seg_key (url ,pdt )
-                ch .seq +=1 
-                ch .segments [key ]=[ch .seq ,dur ,pdt ,url ]
-                ch .order .append (key )
-                added +=1 
-                if pdt :
-                    ch .last_pdt =pdt 
-        else :
-            for dur ,pdt ,url in segs :
-                if pdt and ch .last_pdt and pdt <=ch .last_pdt :
-                    continue 
-                key =seg_key (url ,pdt )
-                if key in ch .segments :
-                    ch .segments [key ][3 ]=url 
-                    continue 
-                if key in ch .seen_keys :
-                    continue 
-                ch .seen_keys .append (key )
-                ch .seq +=1 
-                ch .segments [key ]=[ch .seq ,dur ,pdt ,url ]
-                ch .order .append (key )
-                if pdt :
-                    ch .last_pdt =pdt 
-                added +=1 
-        while len (ch .order )>MAX_SEGS :
-            ch .segments .pop (ch .order .popleft (),None )
-        ch .last_error =''
-    if is_init and added :
-        log (f'[{ch .slug }] {defn_label (ch .defn )} 备用流缓冲就绪 ({len (ch .segments )} 片)')
-    return True 
+def jce_refresh(ch):
+    rows = jce_fetch(ch)
+    target = ch.jce_pending_target
+    out = ['#EXTM3U', '#EXT-X-VERSION:3', '#EXT-X-TARGETDURATION:%d' % target,
+           '#EXT-X-MEDIA-SEQUENCE:%d' % rows[0][0]]
+    for seq, stamp, duration, url in rows:
+        pdt = datetime.datetime.fromtimestamp(stamp, datetime.timezone.utc).isoformat()
+        out += ['#EXT-X-PROGRAM-DATE-TIME:' + pdt, '#EXTINF:%.6f,' % duration, url]
+    with ch.lock:
+        ch.jce_live_playlist = '\n'.join(out) + '\n'
+        ch.jce_target = target
+        ch.jce_sequence_offset = ch.jce_pending_offset
+        ch.jce_accepted_generation = ch.jce_anchor_generation
+        ch.jce_live_tail = rows[-1][:2]
+        ch.jce_live_rows = {r[0]: (r[1], r[2]) for r in rows}
+        ch.jce_live_media_end = rows[-1][1] + rows[-1][2]
+        ch.last_error = ''
+    return True
 def bk_refresh (ch ):
     global_flow_limiter .wait_slot ()
     now =time .time ()
@@ -2740,7 +2895,15 @@ def bk_refresh (ch ):
     ch .bk_urls =[]
     ch .bk_urls_time =0 
     raise RuntimeError (last_err [:120 ]or 'bk playlist failed')
-def refresh_once (ch ):
+def refresh_once(ch):
+    if not ch.refresh_lock.acquire(blocking=False):
+        return False
+    try:
+        return _refresh_once(ch)
+    finally:
+        ch.refresh_lock.release()
+
+def _refresh_once (ch ):
     try :
         if ch .mode =='bk':
             ok =bk_refresh (ch )
@@ -2764,7 +2927,7 @@ def refresh_loop (ch ):
     if time .time ()-ch .last_ok <REFRESH_INTERVAL :
         build_playlist (ch ,holdback =True )
         time .sleep (REFRESH_INTERVAL )
-    while time .time ()-ch .last_access <IDLE_TIMEOUT :
+    while time .time ()-ch .last_access <LOW_STREAM_IDLE_TIMEOUT :
         ok =refresh_once (ch )
         if ok :
             build_playlist (ch ,holdback =True )
@@ -2780,8 +2943,8 @@ def ensure_channel (ch ):
             wait_only =True 
         else :
             thread_dead =ch .thread is None or not ch .thread .is_alive ()
-            cache_stale =now -ch .last_ok >IDLE_TIMEOUT or (not ch .segments and (not ch .bk_playlist ))
-            if cache_stale :
+            cache_stale =now -ch .last_ok >LOW_PLAYLIST_MAX_AGE or (not ch .segments and (not ch .bk_playlist ))
+            if cache_stale and thread_dead:
                 ch .segments .clear ()
                 ch .order .clear ()
                 ch .seen_keys .clear ()
@@ -2808,6 +2971,14 @@ def ensure_channel (ch ):
             ch ._starting =False 
 def build_playlist (ch ,holdback :bool =True ):
     with ch .lock :
+        if time.time() - ch.last_ok > LOW_PLAYLIST_MAX_AGE:
+            return None
+        if ch.mode == 'jce' and getattr(ch, 'jce_live_playlist', ''):
+            if time.time() - ch.jce_live_media_end > 30:
+                return None
+            ch.last_built_playlist = ch.jce_live_playlist
+            ch.last_built_time = time.time()
+            return ch.jce_live_playlist
         if ch .mode =='bk':
             res =ch .bk_playlist or None 
             if res :
@@ -2835,6 +3006,9 @@ def build_playlist (ch ,holdback :bool =True ):
         ch .last_built_time =time .time ()
     return res 
 def trigger_background_refresh (ch ):
+    with ch.lock:
+        if ch._starting or (ch.thread is not None and ch.thread.is_alive()):
+            return
     with _inflight_lock :
         if ch .slug in _inflight_refresh :
             return 
@@ -2875,7 +3049,7 @@ def get_channel_instance (slug :str )->Channel |None :
         return ch 
     return None 
 engine_port =8787 
-ALLOWED_ENGINE_PROXY_SUFFIXES =('.cctv.cn','.cctv.com','.yangshipin.cn','.cntv.cn','.cntv.com','.myqcloud.com','.qqlive.com','.gtimg.cn','.alicdn.com','.alikunlun.com')
+ALLOWED_ENGINE_PROXY_SUFFIXES =('.cctv.cn','.cctv.com','.cctvpic.com','.citvc.com','.yangshipin.cn','.cntv.cn','.cntv.com','.myqcloud.com','.qqlive.com','.gtimg.cn','.smtcdns.net','.smtcdns.com','.tcdnlive.com','.alicdn.com','.alikunlun.com','.wscdns.com','.chinanetcenter.com','.bdydns.com','.ksyungslb.com','.ks-cdn.com')
 def _is_safe_engine_proxy_url (target :str ,_depth :int =0 )->bool :
     if _depth >2 :
         return False 
@@ -2939,7 +3113,7 @@ def fetch_upstream_engine_playlist (canonical :str ,host :str ,proto :str ='http
             pass 
     return None 
 class Handler (BaseHTTPRequestHandler ):
-    server_version ='ysp-live/9.5.0'
+    server_version ='ysp-live/9.6.1'
     def log_message (self ,fmt ,*args ):
         pass 
     def _send (self ,code ,body ,ctype ='text/plain; charset=utf-8',head_only =False ,extra_headers =None ):
@@ -2992,7 +3166,7 @@ class Handler (BaseHTTPRequestHandler ):
             active_slots =len ([s for s in (resolver .state .sessions .values ()if resolver else [])if s and resolver .app_session_fresh (s )])
             health_data ={
             "ok":True ,
-            "version":"9.5.0",
+            "version":"9.6.1",
             "author_community":AUTHOR_COMMUNITY ,
             "author_channel":AUTHOR_CHANNEL ,
             "notice":"其他渠道均非作者发布！",
@@ -3058,7 +3232,7 @@ class Handler (BaseHTTPRequestHandler ):
             info =[]
             now =time .time ()
             info .append ("====================================================")
-            info .append (f"ysp-live v9.5 诊断报告 (运行时间: {int (now -server_start_time )}s)")
+            info .append (f"ysp-live v9.6.1 诊断报告 (运行时间: {int (now -server_start_time )}s)")
             info .append ("📢 首发地址")
             info .append (f"社区：Gary's Club ({AUTHOR_COMMUNITY})")
             info .append (f"频道：Gary's Club Channel ({AUTHOR_CHANNEL})")
@@ -3244,7 +3418,18 @@ class Handler (BaseHTTPRequestHandler ):
                 if not resolver .is_channel_in_cooldown (canonical ):
                     try :
                         host =self .headers .get ('Host',f'localhost:{server_port }')
-                        pl =resolver .fetch_channel_playlist (canonical ,host ,proto )
+                        # Like the JS auto path, cold start may use the already-enabled device source.
+                        # Delay it only if a valid low rendition is actually ready to serve now.
+                        now_ts=time.time()
+                        with ch.lock:
+                            ready_low=(
+                                bool(ch.last_built_playlist)
+                                and now_ts-ch.last_built_time<15.0
+                                and now_ts-ch.last_ok<=LOW_PLAYLIST_MAX_AGE
+                                and (ch.mode != 'jce' or now_ts-getattr(ch,'jce_live_media_end',0)<=30)
+                                and '#EXTM3U' in ch.last_built_playlist
+                            )
+                        pl =resolver .fetch_channel_playlist (canonical ,host ,proto ,allow_zap_debounce=ready_low)
                         if pl and '#EXTM3U'in pl :
                             with ch .lock :
                                 prev_src =getattr (ch ,'last_m3u8_source',None )
@@ -3273,11 +3458,11 @@ class Handler (BaseHTTPRequestHandler ):
                         clean_err =str (e ).strip ()
                         log (f'[{canonical }] 高码率播放暂时受限 ({clean_err })，平滑回退 1080p (冷却 {cd_sec }s)',min_interval =5.0 )
             now_ts =time .time ()
-            ch .last_access =now_ts 
+            jce_note_access(ch, now_ts) if ch.mode == 'jce' else setattr(ch, 'last_access', now_ts) 
             with ch .lock :
                 cached_pl =ch .last_built_playlist 
                 cached_age =now_ts -ch .last_built_time 
-            if cached_pl and cached_age <15.0 and ('#EXTM3U'in cached_pl ):
+            if cached_pl and cached_age <15.0 and (ch.mode != 'jce' or now_ts - getattr(ch, 'jce_live_media_end', 0) <= 30) and now_ts - ch.last_ok <= LOW_PLAYLIST_MAX_AGE and ('#EXTM3U'in cached_pl ):
                 with ch .lock :
                     prev_src =getattr (ch ,'last_m3u8_source',None )
                     ch .last_m3u8_source ='bk'
@@ -3297,6 +3482,12 @@ class Handler (BaseHTTPRequestHandler ):
                     pl =inject_hls_discontinuity (pl )
                 self ._send (200 ,pl ,'application/vnd.apple.mpegurl',head_only =head_only )
                 return 
+            if ch.mode == 'jce':
+                retry = max(jce_request_gate.remaining(), getattr(ch,'jce_media_blocked_until',0)-time.time())
+                if retry > 0:
+                    self._send(503, '低码率接口限流冷却中，请稍后重试\n', head_only=head_only,
+                               extra_headers={'Retry-After': str(max(1,math.ceil(retry)))})
+                    return
             upstream_pl =fetch_upstream_engine_playlist (canonical ,self .headers .get ('Host',f'localhost:{server_port }'),proto )
             if upstream_pl and '#EXTM3U'in upstream_pl :
                 self ._send (200 ,upstream_pl ,'application/vnd.apple.mpegurl',head_only =head_only )
@@ -3400,7 +3591,7 @@ def main ():
     global resolver ,server_port ,engine_port ,global_channel_dir ,global_ts_cache 
     if os.name == 'nt':
         os.system('') 
-    ap =argparse .ArgumentParser (description ='央视频全频道直播代理（ysp-live v9.5）')
+    ap =argparse .ArgumentParser (description ='央视频全频道直播代理（ysp-live v9.6.1）')
     ap .add_argument ('port',nargs ='?',type =int ,default =8767 ,help ='监听端口 (默认 8767)')
     ap .add_argument ('--bind',default ='0.0.0.0',help ='监听地址 (默认 0.0.0.0)')
     ap .add_argument ('--data-dir',default =os .environ .get ('YSP_DATA_DIR',''),help ='数据持久化目录 (默认由 YSP_DATA_DIR 环境变量或脚本所在目录决定)')
@@ -3408,7 +3599,7 @@ def main ():
     ap .add_argument ('--no-4k',action ='store_true',help ='不启动设备协议 (仅走 1080p JCE/bkliveinfo)')
     ap .add_argument ('--only-4k',action ='store_true',help ='仅 4K/8K 频道走设备协议 (默认全部 26 个高码率频道走设备协议)')
     ap .add_argument ('--links-per-device',type =int ,default =int (os .environ .get ('YSP_LINKS_PER_DEVICE','6')),help ='单设备高码率链接配额上限 (默认 6, 设为 0 关闭主动轮换)')
-    ap .add_argument ('--zap-debounce',type =float ,default =float (os .environ .get ('YSP_ZAP_DEBOUNCE','10.0')),help ='换台防抖秒数: 切台后先出 1080p, 停留超过该秒数才后台请求高码率 (默认 10.0, 设为 0 关闭)')
+    ap .add_argument ('--zap-debounce',type =float ,default =float (os .environ .get ('YSP_ZAP_DEBOUNCE','10.0')),help ='换台防抖秒数: 仅低码率清单已就绪时先播低码率，无可用低码率清单则直接尝试当前已启用的设备源 (默认 10.0, 设为 0 关闭)')
     ap .add_argument ('--engine-port',type =int ,default =8787 ,help ='Web WASM 引擎端口 (默认 8787)')
     ap .add_argument ('--timeout',type =float ,default =10.0 ,help ='设备协议 HTTP 超时秒数 (默认 10, 注册失败时更快回退 1080p)')
     ap .add_argument ('--no-engine',action ='store_true',help ='不启动 Web WASM 伴生引擎')
@@ -3473,7 +3664,7 @@ def main ():
     RESET = '\033[0m'
 
     log ('====================================================================')
-    log (f'ysp-live v9.5 启动成功: {channels_count } 个独立频道 (央视FHD {c_fhd } 路, 央视UHD {c_uhd } 路, CGTN {c_cgtn } 路)')
+    log (f'ysp-live v9.6.1 启动成功: {channels_count } 个独立频道 (央视FHD {c_fhd } 路, 央视UHD {c_uhd } 路, CGTN {c_cgtn } 路)')
     log (f'全频道订阅:   http://localhost:{args .port }/cctv.m3u')
     log (f'节目单:       http://localhost:{args .port }/epg.xml')
     log (f'系统健康度:   http://localhost:{args .port }/health')

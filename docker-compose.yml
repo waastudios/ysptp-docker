@@ -1,6 +1,6 @@
 services:
   ysp-live:
-    image: ysp-live:9.5
+    image: ysp-live:9.6
     build:
       context: .
       dockerfile: Dockerfile

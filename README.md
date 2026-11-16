@@ -1,4 +1,4 @@
-# ysp-live v9.5
+# ysp-live v9.6
 
 > **Acknowledgments**
 > 1. Thanks to [IPTV Official Group](http://t.me/iptvorganization) for sharing the algorithm source code
@@ -96,6 +96,16 @@ docker compose down            # stop
 
 ## Changelog
 
+### v9.6 (2026-11-16)
+- Upstream: JCE rate-limit backoff — requests serialized (min 2s apart), shared cooldown 60s doubling to 900s on repeated throttling, honours Retry-After; no provider switching to bypass limits
+- Upstream: cold-start order — device-protocol channels try the device source directly when no valid low-bitrate cache exists
+- Upstream: idle low-bitrate polling stops after 20s without new requests; cached playlists reused only within a 30s freshness window
+- Upstream: low-bitrate rolling window reuses only completed segments, keeping one-segment safety margin
+- Upstream: engine proxy allowlist expanded with more CCTV CDN domains
+- Upstream note: this release was only tested with simulated data; iOS end-to-end verification not yet done
+- This build: 30 channels (CCTV/CGTN only), groups 央视FHD/央视UHD/CGTN
+- Built-in EPG aggregation (`/epg.xml`), 4K channels locked to true 4K
+
 ### v9.5 (2026-10-17)
 - Upstream: state persistence + 400 self-healing persistence fix (device rotation no longer breaks self-healing)
 - Upstream: precise zap debounce; background high-bitrate prefetch auto-cancels after switching away, reducing rate-limit risk
@@ -118,7 +128,7 @@ docker compose down            # stop
 
 ```bash
 cd /opt/ysp-live-docker && docker compose down -v
-docker rmi ysp-live:9.5
-cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.5.zip
+docker rmi ysp-live:9.6
+cd /opt && rm -rf /opt/ysp-live-docker /opt/v9.6.zip
 ```
 `docker compose down -v` also removes the device registration data.
